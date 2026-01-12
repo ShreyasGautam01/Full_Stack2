@@ -7,7 +7,7 @@ function App() {
 
   const addTask = () => {
     if (task.trim() !== "") {
-      setTasks([...tasks, task]); 
+      setTasks([...tasks, task]);
       setTask("");
     }
   };

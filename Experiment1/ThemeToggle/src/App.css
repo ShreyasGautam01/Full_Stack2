@@ -1,0 +1,34 @@
+#root {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+}
+
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.light {
+  background-color: white;
+  color: darkgray;
+}
+
+.dark {
+  background-color: darkblue;
+  color: #ffffff;
+}
+
+button {
+  padding: 10px 20px;
+  cursor: pointer;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  font-weight: 500;
+  margin-top: 20px;
+}

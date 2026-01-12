@@ -1,0 +1,40 @@
+#root {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  margin: 0;
+  background-color: AliceBlue; 
+  font-family: sans-serif;
+}
+
+form, .result {
+  display: flex;
+  flex-direction: column;
+  gap: 15px; 
+  width: 300px;
+  padding: 20px;
+  background-color: White;
+  border: 2px solid SteelBlue;
+  border-radius: 10px;
+}
+
+input {
+  padding: 10px;
+  border: 1px solid LightGray;
+  border-radius: 5px;
+}
+
+button {
+  padding: 10px;
+  cursor: pointer;
+  background-color: DodgerBlue;
+  color: White;
+  border: none;
+  border-radius: 5px;
+  font-weight: bold;
+}
+
+button:hover {
+  background-color: DeepSkyBlue;
+}
