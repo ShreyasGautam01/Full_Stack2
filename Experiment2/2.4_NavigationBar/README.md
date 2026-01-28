@@ -16,3 +16,6 @@ This experiment focuses on the implementation and customization of the **Bootstr
 ## Usage
 1. Run `npm install` to set up dependencies.
 2. Run `npm run dev` to view the customized navbar in your browser.
+
+## Screenshot
+![alt text](../Screenshots/2.4.png)

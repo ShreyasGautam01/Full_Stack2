@@ -16,3 +16,6 @@ This project explores the use of **Material UI (MUI)** components within a React
 ## Setup
 1. Install dependencies: `npm install`
 2. Run development server: `npm run dev`
+
+## Screenshot
+![alt text](../Screenshots/2.3.png)

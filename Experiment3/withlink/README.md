@@ -6,40 +6,40 @@ The application utilizes declarative routing to toggle between a Profile page (f
 
 ### Key Components Used
 BrowserRouter: Enables the use of the HTML5 history API to keep the UI in sync with the URL.
-
 Routes & Route: Used to define and render specific components based on the current path.
-
 Link: Provides accessible navigation throughout the application, replacing standard anchor tags to maintain the SPA state.
 
 ## Getting Started
 1. Prerequisites
 Install the router dependency in your React project:
-
 npm install react-router-dom
+
 2. Styling (App.css)
 Use this minimalist CSS to center the application content:
-
-CSS
 html, body {
   margin: 0;
   padding: 0;
   height: 100vh;
 }
-
 #root {
   display: grid;
   place-items: center;
   height: 100vh;
   text-align: center;
 }
+
 3. Implementation
 Replace the contents of your App.js with the provided experimental code. The structure follows this logic:
-
-Path|Component Rendered|Description| 1. /Profile|<Profile />|Displays a marquee welcome and developer bio. 2. /Dashboard|<Dashboard />|Displays the admin panel welcome message.
+Path|Component Rendered|Description|
+/Profile|<Profile />|Displays a marquee welcome and developer bio.
+/Dashboard|<Dashboard />|Displays the admin panel welcome message.
 
 ## How to Run
-Start the development server: npm start.
-
+Start the development server: npm run dev.
 Use the buttons at the bottom of the screen to switch between the Profile and Dashboard views.
-
 Observe that the URL changes and the content updates instantly without the browser refreshing.
+
+## Screenshots
+![alt text](../Screenshots/link1.png)
+![alt text](../Screenshots/link2.png)
+![alt text](../Screenshots/link3.png)

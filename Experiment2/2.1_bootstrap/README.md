@@ -35,3 +35,6 @@ App.jsx: Contains the main structure and the React logic for dynamic class swapp
 App.css: (Optional) Used for custom style overrides that fall outside of standard Bootstrap utilities.
 
 index.css: Handles global styles such as the body background or default typography.
+
+## Screenshot
+![alt text](../Screenshots/2.1.png)

@@ -75,3 +75,10 @@ npm install @mui/material @emotion/react @emotion/styled @mui/icons-material fra
 3.Ensure you have the Quicksand font imported in your index.html for the intended typography:
 HTML
 <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;700&disp
+
+## Screenshots
+![alt text](Screenshots/1.png)
+![alt text](Screenshots/2.png)
+![alt text](Screenshots/3.png)
+![alt text](Screenshots/4.png)
+![alt text](Screenshots/5.png)

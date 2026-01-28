@@ -35,3 +35,6 @@ This installs the necessary libraries, including Bootstrap and React, into your 
 Run the following command to view the project in your browser:
 npm run dev
 This command executes the Vite development environment.
+
+## Screenshot
+![alt text](../Screenshots/2.2.png)
