@@ -1,0 +1,33 @@
+body {
+  display: flex;          
+  justify-content: center;  
+  align-items: center;      
+  min-height: 100vh;       
+  margin: 0;               
+}
+
+.container {
+  border: 2px solid black;
+  background-color: white;
+  width: 300px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+h1 {
+  color: blue;
+}
+
+h2 {
+  color: green;
+}
+
+nav {
+  margin-bottom: 20px;
+}
+
+nav a {
+  margin: 10px;
+  color: red;
+  text-decoration: none;
+}
