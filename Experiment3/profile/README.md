@@ -37,7 +37,7 @@ Path|Component Rendered|Description|
 
 ## How to Run
 Start the development server: npm start.
-Open your browser to http://localhost:3000/Profile to see the profile view. (you may any local server)
+Open your browser to http://localhost:3000/Profile to see the profile view. (you may use any local server)
 Change the URL to http://localhost:3000/Dashboard to view the skills list.
 
 ## Screenshots
