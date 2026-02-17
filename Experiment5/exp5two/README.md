@@ -21,3 +21,8 @@ Ensure your folder structure matches the imports:
 src/App.js
 src/Components/Dashboard.js
 src/Components/Profile.js
+
+# Screenshots
+![alt text](../Screenshots/5.2.1.png)
+![alt text](../Screenshots/5.2.2.png)
+![alt text](../Screenshots/5.2.3.png)

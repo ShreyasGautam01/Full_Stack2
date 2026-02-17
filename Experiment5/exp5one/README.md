@@ -47,3 +47,7 @@ Install dependencies:
 npm install
 Start the development server:
 npm run dev
+
+# Screenshots
+![alt text](../Screenshots/5.1.1.png)
+![alt text](../Screenshots/5.1.2.png)
