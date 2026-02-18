@@ -1,0 +1,77 @@
+:root {
+  font-family: 'Inter', system-ui, sans-serif;
+  background-color: #0f172a;
+  color: #f8fafc;
+}
+
+.redux-dashboard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 80vh;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+}
+
+.counter-display {
+  font-size: 6rem;
+  font-weight: 800;
+  color: #38bdf8;
+  margin: 0.5rem 0;
+}
+
+.badge {
+  background: #334155;
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  margin-bottom: 2rem;
+  display: inline-block;
+}
+
+.controls {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 3rem;
+}
+
+button {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  background: #f8fafc;
+  color: #0f172a;
+  transition: all 0.2s ease;
+}
+
+button:hover {
+  background: #cbd5e1;
+  transform: translateY(-2px);
+}
+
+.redux-explanation {
+  background: #1e293b;
+  padding: 1.5rem 2.5rem;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 500px;
+  text-align: left;
+}
+
+.redux-explanation h3 {
+  text-align: center;
+  margin-top: 0;
+  color: #38bdf8;
+}
+
+ul {
+  padding-left: 20px;
+  line-height: 1.6;
+}
