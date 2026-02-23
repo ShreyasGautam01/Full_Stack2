@@ -4,9 +4,8 @@ export default function Navbar() {
   return (
     <nav className="navbar">
       <Link to="/">Home</Link>
-      <Link to="/dashboard">Dashboard</Link>
       <Link to="/contact">Contact</Link>
-      <Link to="/profile">Profile</Link>
+      <Link to="/about">Profile</Link>
     </nav>
   );
 }

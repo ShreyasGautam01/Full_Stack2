@@ -3,10 +3,10 @@ import { lazy, Suspense } from 'react';
 import Navbar from './Components/Navbar';
 import './App.css';
 
+// Lazy loading the components
 const Home = lazy(() => import('./Components/Home'));
-const Dash = lazy(() => import('./Components/Dashboard'));
 const Contact = lazy(() => import('./Components/Contact'));
-const Prof = lazy(() => import('./Components/Profile'));
+const About = lazy(() => import('./Components/About'));
 
 function App() {
   return (
@@ -14,28 +14,19 @@ function App() {
       <Navbar />
       <div className="page-content">
         <Routes>
-          {/* Each route now has its own specific fallback UI */}
           <Route path="/" element={
             <Suspense fallback={<div className="home-load">Entering Home...</div>}>
               <Home />
             </Suspense>
           } />
-          
-          <Route path="/dashboard" element={
-            <Suspense fallback={<div className="dash-load">Fetching Dashboard...</div>}>
-              <Dash />
-            </Suspense>
-          } />
-
           <Route path="/contact" element={
             <Suspense fallback={<div className="contact-load">Collecting Contact Information...</div>}>
               <Contact />
             </Suspense>
           } />
-
-          <Route path="/profile" element={
-            <Suspense fallback={<div className="prof-load">Loading User Profile...</div>}>
-              <Prof />
+          <Route path="/about" element={
+            <Suspense fallback={<div className="about-load">About Under Loading...</div>}>
+              <About />
             </Suspense>
           } />
         </Routes>
