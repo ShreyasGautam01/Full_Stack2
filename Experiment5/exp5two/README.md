@@ -44,4 +44,4 @@ Click through the Navbar links. You will notice that each page shows its own uni
 ## Conclusion
 This experiment successfully demonstrates that wrapping individual routes in separate Suspense boundaries provides a more polished, professional feel compared to a single global loading spinner. It ensures the user receives contextual feedback relevant to the page they are attempting to access.
 # Screenshots
-![alt text](../Screenshots/5.2.1.png) ![alt text](../Screenshots/5.2.2.png) ![alt text](../Screenshots/5.2.3.png) ![alt text](../Screenshots/5.2.4.png) ![alt text](../Screenshots/5.2.5.png) ![alt text](../Screenshots/5.2.6.png) ![alt text](../Screenshots/5.2.7.png) ![alt text](../Screenshots/5.2.8.png) ![alt text](../Screenshots/5.2.9.png) ![alt text](../Screenshots/5.2.10.png)
+![alt text](../Screenshots/5.2.1.png) ![alt text](../Screenshots/5.2.2.png) ![alt text](../Screenshots/5.2.3.png) ![alt text](../Screenshots/5.2.4.png) ![alt text](../Screenshots/5.2.5.png) ![alt text](../Screenshots/5.2.6.png)
