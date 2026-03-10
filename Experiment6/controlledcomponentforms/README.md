@@ -68,4 +68,4 @@ Access the Application:
 Open the URL provided in the terminal (usually http://localhost:5173).
 
 ## Screenshots
-Experiment6/Screenshots/6.1.1.png Experiment6/Screenshots/6.1.2.png Experiment6/Screenshots/6.1.3.png Experiment6/Screenshots/6.1.4.png
+![alt text](../Screenshots/6.1.1.png) ![alt text](../Screenshots/6.1.2.png) ![alt text](../Screenshots/6.1.3.png) ![alt text](../Screenshots/6.1.4.png)

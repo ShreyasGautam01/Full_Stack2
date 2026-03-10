@@ -1,42 +1,64 @@
 #root {
-  max-width: 1280px;
+  width: 100%;
   margin: 0 auto;
-  padding: 2rem;
   text-align: center;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+
+html, body,{
+  margin: 0;
+  padding: 0;
+  height: 100vh; /* 100% of Viewport Height */
+  width: 100vw;  /* 100% of Viewport Width */
+  overflow: hidden; /* Prevents accidental scrollbars */
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+body {
+  display: flex;
+  justify-content: center; /* Perfect Horizontal Center */
+  align-items: center;     /* Perfect Vertical Center */
+  background-color: #f3f4f6;
+  font-family: 'Inter', system-ui, sans-serif;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
+
+#root {
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
-.card {
-  padding: 2em;
+#root > div {
+  background: white;
+  padding: 2.5rem !important; /* Force internal spacing */
+  border-radius: 16px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  width: 100%;
+  max-width: 420px; /* Limits the card width */
+  border: 1px solid #e5e7eb;
 }
 
-.read-the-docs {
-  color: #888;
+h2 {
+  text-align: center;
+  margin-bottom: 1.5rem;
+  color: #111827;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+input {
+  border: 1px solid #d1d5db !important;
+  border-radius: 6px !important;
+  margin-bottom: 4px;
+}
+
+button {
+  width: 100%;
+  border-radius: 6px !important;
+  font-weight: 600 !important;
+  transition: transform 0.1s ease;
+}
+
+button:active {
+  transform: scale(0.98);
 }
