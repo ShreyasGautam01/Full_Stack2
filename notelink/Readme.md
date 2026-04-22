@@ -1,4 +1,4 @@
-NoteLink
+# NoteLink
 
 Full-Stack Knowledge Management System (v1.0)
 
@@ -163,3 +163,6 @@ Plain-text Notes: Prioritizes the "Knowledge Graph" structure over rich-text com
 Filesystem Storage: Images are stored on the local disk for zero-cost development. Note: For horizontal scaling, an object store like AWS S3 should be utilized.
 
 NoteLink v1.0 • Capture the connections between your thoughts.
+
+# Screenshots
+![alt text](<Screenshots/Screenshot 2026-04-20 112603.png>) ![alt text](<Screenshots/Screenshot 2026-04-20 112615.png>) ![alt text](<Screenshots/Screenshot 2026-04-20 112635.png>) ![alt text](<Screenshots/Screenshot 2026-04-22 101445.png>)
