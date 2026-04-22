@@ -769,3 +769,492 @@ hr.divider { border: none; border-top: 1px solid var(--color-border); margin: 1r
   padding:        2rem 1rem;
   color:          var(--color-text-muted);
 }
+
+/* ════════════════════════════════════════════════════════════════════════════
+   v3 additions – NoteDetail, category system, graph toolbar, lightbox,
+                  colour picker, image uploader fixes
+   ════════════════════════════════════════════════════════════════════════════ */
+
+/* ── Category badge (shared across cards, detail, graph panel) ───────────── */
+.category-badge {
+  display:       inline-flex;
+  align-items:   center;
+  font-size:     .75rem;
+  font-weight:   600;
+  padding:       .2rem .55rem;
+  border-radius: 99px;
+  border:        1px solid;
+  letter-spacing: .02em;
+  white-space:   nowrap;
+}
+.card-category { margin-bottom: .4rem; }
+
+/* ── Note card – accent left border from CSS variable ─────────────────────── */
+.note-card { border-left: 3px solid var(--card-accent, var(--color-primary)); }
+.note-card-thumb {
+  margin-top:    .6rem;
+  border-radius: var(--radius-sm);
+  overflow:      hidden;
+  height:        100px;
+}
+.note-card-thumb img { width: 100%; height: 100%; object-fit: cover; }
+
+/* ── Note detail page ─────────────────────────────────────────────────────── */
+.note-detail-page { max-width: 960px; margin: 0 auto; }
+
+.note-detail-topbar {
+  display:     flex;
+  align-items: center;
+  gap:         .75rem;
+  margin-bottom: 1.25rem;
+}
+
+.note-detail-header {
+  border-left:   4px solid var(--color-primary);
+  padding-left:  1rem;
+  margin-bottom: 1.5rem;
+}
+.note-detail-title {
+  font-size:   1.75rem;
+  font-weight: 700;
+  line-height: 1.25;
+  margin:      .3rem 0 .4rem;
+}
+.note-detail-meta {
+  font-size: .85rem;
+  color:     var(--color-text-muted);
+}
+
+/* Two-column layout: main content + sidebar */
+.note-detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 260px;
+  gap: 1.5rem;
+  align-items: start;
+}
+@media (max-width: 680px) {
+  .note-detail-grid { grid-template-columns: 1fr; }
+}
+
+.note-content-section {
+  background:    var(--color-surface);
+  border:        1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding:       1.25rem 1.5rem;
+  line-height:   1.75;
+}
+.note-content-line   { margin: 0 0 .5rem; }
+.note-content-spacer { height: .75rem; }
+
+/* Gallery */
+.note-gallery-section { margin-top: 1.25rem; }
+
+.section-heading {
+  font-size:     .8rem;
+  font-weight:   600;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color:         var(--color-text-muted);
+  margin-bottom: .65rem;
+  display:       flex;
+  align-items:   center;
+  gap:           .5rem;
+}
+.section-count {
+  background:    var(--color-border);
+  color:         var(--color-text-muted);
+  font-size:     .72rem;
+  padding:       .1rem .4rem;
+  border-radius: 99px;
+}
+
+.gallery-grid {
+  display:               grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap:                   .6rem;
+}
+.gallery-thumb {
+  position:      relative;
+  aspect-ratio:  1;
+  border-radius: var(--radius-md);
+  overflow:      hidden;
+  background:    var(--color-border);
+  border:        none;
+  cursor:        zoom-in;
+  padding:       0;
+}
+.gallery-thumb img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform .18s;
+}
+.gallery-thumb:hover img    { transform: scale(1.04); }
+.gallery-thumb:hover .gallery-overlay { opacity: 1; }
+.gallery-broken {
+  display:         none;
+  align-items:     center;
+  justify-content: center;
+  width: 100%; height: 100%;
+  font-size: 2rem;
+  color: var(--color-text-muted);
+}
+.gallery-overlay {
+  position:  absolute; inset: 0;
+  display:   flex; align-items: center; justify-content: center;
+  background: rgba(0,0,0,.45);
+  color:     #fff; font-size: .82rem; font-weight: 600;
+  opacity:   0; transition: opacity .15s;
+}
+
+/* Linked-notes sidebar */
+.note-detail-sidebar {
+  background:    var(--color-surface);
+  border:        1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding:       1rem;
+}
+.linked-note-row {
+  display:       flex;
+  align-items:   center;
+  gap:           .4rem;
+  padding:       .4rem .3rem;
+  border-radius: var(--radius-sm);
+  color:         var(--color-text);
+  font-size:     .85rem;
+  text-decoration: none;
+  transition:    background .12s;
+}
+.linked-note-row:hover { background: var(--color-border); text-decoration: none; }
+.linked-note-arrow  { font-weight: 700; flex-shrink: 0; }
+.linked-note-title  { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ── Lightbox ──────────────────────────────────────────────────────────────── */
+.lightbox {
+  position:  fixed; inset: 0; z-index: 999;
+  background: rgba(0,0,0,.82);
+  display:   flex; align-items: center; justify-content: center;
+  animation: lb-in .15s ease;
+}
+@keyframes lb-in { from { opacity: 0; } to { opacity: 1; } }
+
+.lightbox-content {
+  position:      relative;
+  max-width:     min(90vw, 1100px);
+  max-height:    90vh;
+  display:       flex;
+  flex-direction: column;
+  align-items:   center;
+  gap:           .75rem;
+}
+.lightbox-img {
+  max-width:  100%;
+  max-height: calc(90vh - 80px);
+  object-fit: contain;
+  border-radius: var(--radius-md);
+  display:    block;
+}
+.lightbox-close {
+  position:      absolute;
+  top:           -12px;
+  right:         -12px;
+  width:         32px; height: 32px;
+  border-radius: 50%;
+  background:    rgba(255,255,255,.15);
+  color:         #fff;
+  font-size:     1.25rem;
+  line-height:   1;
+  border:        none;
+  cursor:        pointer;
+  display:       flex; align-items: center; justify-content: center;
+  transition:    background .12s;
+}
+.lightbox-close:hover { background: rgba(255,255,255,.3); }
+.lightbox-nav {
+  position:   absolute;
+  top:        50%;
+  transform:  translateY(-50%);
+  width:      40px; height: 56px;
+  background: rgba(255,255,255,.12);
+  color:      #fff; font-size: 1.8rem;
+  border:     none; border-radius: var(--radius-sm);
+  cursor:     pointer;
+  display:    flex; align-items: center; justify-content: center;
+  transition: background .12s;
+}
+.lightbox-nav:hover { background: rgba(255,255,255,.25); }
+.lightbox-prev { left:  -52px; }
+.lightbox-next { right: -52px; }
+.lightbox-caption {
+  color:     rgba(255,255,255,.65);
+  font-size: .82rem;
+  text-align: center;
+}
+
+/* ── Image uploader: always-visible delete, per-image loading state ───────── */
+.image-delete {
+  opacity:       1 !important;
+  font-size:     14px;
+  font-weight:   700;
+  line-height:   1;
+  transition:    background .12s;
+}
+.image-thumb.deleting { opacity: .45; pointer-events: none; }
+.image-placeholder { font-size: 1.6rem; color: var(--color-text-muted); }
+.uploader-error {
+  display: flex; align-items: center; justify-content: space-between; gap: .5rem;
+}
+.alert-dismiss {
+  background: none; border: none; cursor: pointer;
+  font-size: 1.1rem; color: inherit; line-height: 1; padding: 0 .2rem; flex-shrink: 0;
+}
+
+/* ── Graph toolbar (search + category pills) ─────────────────────────────── */
+.graph-toolbar {
+  display:        flex;
+  flex-direction: column;
+  gap:            .6rem;
+  margin-bottom:  1rem;
+}
+.graph-search-wrap {
+  display:     flex;
+  align-items: center;
+  gap:         .5rem;
+  background:  var(--color-surface);
+  border:      1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding:     .4rem .75rem;
+  max-width:   560px;
+}
+.graph-search-wrap input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 0;
+  font-size: .9rem;
+  color: var(--color-text);
+}
+.graph-search-wrap input:focus { box-shadow: none; }
+.search-icon { font-size: .9rem; flex-shrink: 0; color: var(--color-text-muted); }
+
+/* Category pills */
+.cat-filter-row {
+  display:   flex;
+  flex-wrap: wrap;
+  gap:       .4rem;
+}
+.cat-pill {
+  font-size:     .78rem;
+  font-weight:   500;
+  padding:       .25rem .7rem;
+  border-radius: 99px;
+  border:        1px solid var(--color-border);
+  background:    var(--color-surface);
+  color:         var(--color-text-muted);
+  cursor:        pointer;
+  transition:    border-color .12s, background .12s, color .12s;
+  white-space:   nowrap;
+}
+.cat-pill:hover      { border-color: var(--color-primary); color: var(--color-primary); }
+.cat-pill.active     { font-weight: 600; }
+
+/* ── Graph layout (canvas + panel) ──────────────────────────────────────────── */
+/* Override the original to remove the fixed height on .graph-page */
+.graph-page {
+  height: auto !important;
+  display: flex;
+  flex-direction: column;
+}
+.graph-layout {
+  flex: 1;
+  min-height: 540px;
+}
+.graph-canvas {
+  display:        flex;
+  flex-direction: column;
+  min-height:     500px;
+}
+
+/* ── Graph panel stats ───────────────────────────────────────────────────── */
+.stats-panel   { display: flex; flex-direction: column; gap: .2rem; }
+.stats-row     { display: flex; gap: .5rem; margin: .5rem 0; }
+.stat-box {
+  flex: 1;
+  display:        flex;
+  flex-direction: column;
+  align-items:    center;
+  padding:        .6rem .3rem;
+  background:     var(--color-bg);
+  border:         1px solid var(--color-border);
+  border-radius:  var(--radius-sm);
+}
+.stat-value    { font-size: 1.4rem; font-weight: 700; color: var(--color-primary); }
+.stat-label    { font-size: .72rem; color: var(--color-text-muted); }
+
+.stats-note-row,
+.cat-stat-row {
+  display:     flex;
+  align-items: center;
+  gap:         .5rem;
+  padding:     .3rem .2rem;
+  font-size:   .83rem;
+  border-radius: var(--radius-sm);
+}
+.cat-stat-row.highlighted { background: color-mix(in srgb, var(--color-primary) 8%, transparent); }
+.stats-dot   { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.stats-title { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--color-text); }
+.stats-degree { font-size: .75rem; color: var(--color-text-muted); font-weight: 600; }
+.panel-cat   { margin-bottom: .5rem; }
+
+/* ── NoteEditor: meta row (category + colour on one line) ──────────────────── */
+.editor-meta-row {
+  display:   flex;
+  gap:       1.25rem;
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+.editor-meta-row .field { flex: 1; min-width: 200px; }
+
+/* Colour picker row */
+.color-picker-row {
+  display:     flex;
+  align-items: center;
+  flex-wrap:   wrap;
+  gap:         .4rem;
+  padding:     .35rem 0;
+}
+.color-swatch {
+  width:         22px; height: 22px;
+  border-radius: 50%;
+  border:        2px solid transparent;
+  cursor:        pointer;
+  transition:    transform .1s, border-color .1s;
+  flex-shrink:   0;
+  padding:       0;
+}
+.color-swatch:hover          { transform: scale(1.25); }
+.color-swatch.active         { border-color: #fff; box-shadow: 0 0 0 2px currentColor; }
+.color-custom-input {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  border: 2px solid var(--color-border);
+  padding: 0; cursor: pointer;
+  background: none;
+  flex-shrink: 0;
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   v4 – multi-category tag input, keyboard hints, dirty indicator
+   ════════════════════════════════════════════════════════════════════════════ */
+
+/* ── Tag input ───────────────────────────────────────────────────────────── */
+.tag-input-wrap {
+  display:       flex;
+  flex-wrap:     wrap;
+  align-items:   center;
+  gap:           .35rem;
+  padding:       .4rem .6rem;
+  background:    var(--color-surface);
+  border:        1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  cursor:        text;
+  min-height:    42px;
+  transition:    border-color .15s;
+}
+.tag-input-wrap:focus-within {
+  border-color: var(--color-primary);
+  box-shadow:   0 0 0 3px color-mix(in srgb, var(--color-primary) 15%, transparent);
+}
+.tag-chip {
+  display:       inline-flex;
+  align-items:   center;
+  gap:           .3rem;
+  padding:       .15rem .55rem;
+  border-radius: 99px;
+  background:    color-mix(in srgb, var(--color-primary) 15%, transparent);
+  color:         var(--color-primary);
+  border:        1px solid color-mix(in srgb, var(--color-primary) 35%, transparent);
+  font-size:     .8rem;
+  font-weight:   500;
+  white-space:   nowrap;
+}
+.tag-remove {
+  background:  none;
+  border:      none;
+  color:       inherit;
+  cursor:      pointer;
+  font-size:   .95rem;
+  line-height: 1;
+  padding:     0;
+  opacity:     .7;
+  transition:  opacity .1s;
+}
+.tag-remove:hover { opacity: 1; }
+.tag-draft-input {
+  border:     none;
+  background: transparent;
+  outline:    none;
+  font:       inherit;
+  color:      inherit;
+  padding:    0;
+  min-width:  120px;
+  flex:       1;
+  font-size:  .9rem;
+  box-shadow: none !important;
+}
+
+/* ── Keyboard hint in editor header ─────────────────────────────────────── */
+.kbd-hint {
+  font-size: .78rem;
+  color:     var(--color-text-muted);
+}
+kbd {
+  display:       inline-block;
+  padding:       .05rem .35rem;
+  font-family:   var(--font-mono);
+  font-size:     .78rem;
+  background:    var(--color-bg);
+  border:        1px solid var(--color-border);
+  border-radius: 4px;
+  box-shadow:    0 1px 0 var(--color-border);
+  color:         var(--color-text);
+}
+
+/* ── Dirty indicator ─────────────────────────────────────────────────────── */
+.dirty-indicator {
+  color:       var(--color-primary);
+  font-weight: 700;
+  margin-left: .15rem;
+}
+.saved-msg {
+  font-size:  .82rem;
+  font-weight: 500;
+  color:      var(--color-success-txt, #3B6D11);
+  animation:  fade-out 2s ease forwards;
+}
+@keyframes fade-out {
+  0%,70% { opacity: 1; }
+  100%   { opacity: 0; }
+}
+
+/* ── Category pill count badge ───────────────────────────────────────────── */
+.cat-pill-count {
+  display:       inline-flex;
+  align-items:   center;
+  justify-content: center;
+  margin-left:   .3rem;
+  background:    rgba(128,128,128,.2);
+  border-radius: 99px;
+  font-size:     .7rem;
+  padding:       0 .35rem;
+  min-width:     16px;
+  line-height:   1.5;
+}
+
+/* ── Note card: tag row ──────────────────────────────────────────────────── */
+.note-card-tags {
+  display:   flex;
+  flex-wrap: wrap;
+  gap:       .25rem;
+  margin-bottom: .35rem;
+}

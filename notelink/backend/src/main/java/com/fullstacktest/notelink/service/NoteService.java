@@ -39,6 +39,8 @@ public class NoteService {
         User user = userRepository.findById(userId)
                                   .orElseThrow(() -> new ResourceNotFoundException("User", userId));
         Note note = new Note(request.getTitle(), request.getContent(), user);
+        note.setCategory(request.getCategory());
+        note.setNodeColor(request.getNodeColor());
         return new NoteResponse(noteRepository.save(note));
     }
 
@@ -46,6 +48,8 @@ public class NoteService {
         Note note = findOwnedNote(id, userId);
         note.setTitle(request.getTitle());
         note.setContent(request.getContent());
+        note.setCategory(request.getCategory());
+        note.setNodeColor(request.getNodeColor());
         return new NoteResponse(noteRepository.save(note));
     }
 
@@ -54,7 +58,6 @@ public class NoteService {
         noteRepository.delete(note);
     }
 
-    // Package-visible helper used by ImageService and RelationshipService
     Note findOwnedNote(Long id, Long userId) {
         return noteRepository.findByIdAndUserId(id, userId)
                              .orElseThrow(() -> new ResourceNotFoundException("Note", id));

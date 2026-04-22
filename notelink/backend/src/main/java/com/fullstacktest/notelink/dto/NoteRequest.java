@@ -13,4 +13,11 @@ public class NoteRequest {
     private String title;
 
     private String content;
+
+    @Size(max = 100)
+    private String category;
+
+    /** Hex colour, e.g. #7F77DD. Null = use graph auto-colour. */
+    @Size(max = 7)
+    private String nodeColor;
 }

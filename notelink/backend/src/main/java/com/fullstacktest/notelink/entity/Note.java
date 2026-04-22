@@ -28,6 +28,20 @@ public class Note {
     @Column(columnDefinition = "TEXT")
     private String content;
 
+    /**
+     * User-defined category string (e.g. "Backend", "Security", "Concept").
+     * Drives the category-filter bar in the graph view.
+     */
+    @Column(length = 100)
+    private String category;
+
+    /**
+     * Custom hex colour for this note's node in the graph view (#RRGGBB).
+     * When null the frontend falls back to an auto-colour keyed on category.
+     */
+    @Column(length = 7)
+    private String nodeColor;
+
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime createdAt;
