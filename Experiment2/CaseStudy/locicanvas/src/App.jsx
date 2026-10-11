@@ -210,10 +210,10 @@ export default function App() {
   const [initialStorage] = useState(() => loadSavedPalaces());
   const [palaces, setPalaces] = useState(initialStorage.palaces);
   const [storageIssue, setStorageIssue] = useState(initialStorage.issue);
-  const canvasRef = useRef(null);
+  const persistenceMounted = useRef(false);
   
   // --- NAVIGATION STATE ---
-  const [navStack, setNavStack] = useState(['root']);
+  const [navStack, setNavStack] = useState(() => [initialStorage.palaces[0]?.id || 'root']);
   const currentLevelId = navStack[navStack.length - 1];
   const currentLevel = useMemo(() => palaces.find(p => p.id === currentLevelId) || palaces[0], [palaces, currentLevelId]);
 
@@ -236,13 +236,18 @@ export default function App() {
 
   // --- PERSISTENCE EFFECT ---
   useEffect(() => {
+    if (!persistenceMounted.current) {
+      persistenceMounted.current = true;
+      if (initialStorage.issue) return;
+    }
+
     try {
       localStorage.setItem(STORAGE_KEY, serializePalaceStorage(palaces));
       setStorageIssue('');
     } catch {
       setStorageIssue('Changes could not be saved to browser storage. Export or copy important content before leaving this page.');
     }
-  }, [palaces]);
+  }, [palaces, initialStorage.issue]);
 
   // --- REVEAL ANIMATION ---
   useEffect(() => {
@@ -423,7 +428,6 @@ export default function App() {
 
         {/* --- CANVAS --- */}
         <Box 
-          ref={canvasRef}
           sx={{ height: '100%', width: '100%', position: 'relative', cursor: editMode ? 'crosshair' : 'default' }} 
           onClick={handleCanvasClick}
         >
