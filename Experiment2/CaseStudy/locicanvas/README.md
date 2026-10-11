@@ -25,7 +25,7 @@ LociCanvas is a visual digital memory palace based on the Method of Loci. Create
 - Material UI 7
 - Framer Motion 12
 - Browser `localStorage` (current persistence; no accounts or cloud sync yet)
-- Node.js test runner for domain-level tests
+- Node.js test runner for domain tests and PostgreSQL 17 CI checks for the migration, RLS, constraints, and gateway cleanup
 
 ## Run locally
 
@@ -44,13 +44,15 @@ npm run lint
 npm run build
 ```
 
+GitHub Actions also applies the SQL migration to a disposable PostgreSQL 17 database and checks the owner policies and integrity constraints. This uses a test-only substitute for the Supabase Auth helper; it does not replace a live Supabase project verification.
+
 ## Data persistence and recovery
 
 The application uses the browser storage key `locicanvas_v2_data`. New saves use an envelope containing `schemaVersion` and `palaces`; existing valid array-format data is still read and migrated on the next successful save.
 
 If saved data is malformed or fails structural validation, the app attempts to preserve the raw value under `locicanvas_v2_data_recovery` and loads the sample collection instead of silently treating malformed data as an empty collection. Browser storage may be unavailable or full, so this recovery copy is best-effort. Do not clear site data if you need to recover a previous collection.
 
-Data is still local to a browser profile and origin. It is not synchronized across devices, and clearing browser storage can remove it. Cloud accounts, database persistence, and deployment are planned separately; they are not implemented in this phase.
+Data is still local to a browser profile and origin. It is not synchronized across devices, and clearing browser storage can remove it. Cloud accounts and database persistence are not implemented yet. Static hosting does not change the localStorage-only behavior.
 
 ## Project structure
 
@@ -59,6 +61,9 @@ Data is still local to a browser profile and origin. It is not synchronized acro
 - `src/domain/palaceModel.test.js`: tests for domain operations and data validation.
 - `vite.config.js`: Vite configuration.
 - `IMPROVEMENT_PLAN.md`: phased multi-user upgrade plan and architecture decisions.
+- `supabase/migrations/`: version-controlled PostgreSQL schema and RLS policies.
+- `supabase/tests/`: disposable PostgreSQL setup plus migration/ownership tests run in CI.
+- `SUPABASE_SETUP.md`: database setup, migration deployment, and live cloud-security verification checklist.
 
 ## GitHub Pages deployment
 
@@ -68,7 +73,7 @@ Before its first successful deployment, open **Repository Settings → Pages →
 
 Expected site URL: https://shreyasgautam01.github.io/Full_Stack2/
 
-GitHub Pages only serves the static frontend. This version continues to store data in the current browser's localStorage; it does **not** yet offer accounts, shared cloud data, or cross-device synchronization.
+GitHub Pages only serves the static frontend. The deployment workflow has completed successfully, but this version continues to store data in the current browser's localStorage; it does **not** yet offer accounts, cloud persistence, or cross-device synchronization. The Supabase schema foundation is being added separately; the frontend must not be considered cloud-connected until the authentication and repository integration is implemented.
 
 ## Current limitations
 
@@ -77,7 +82,8 @@ GitHub Pages only serves the static frontend. This version continues to store da
 - Import currently accepts pasted JSON backup content; direct file-picker import is not implemented.
 - Browser-local recovery remains best-effort and depends on browser storage being accessible.
 - Palace deletion UI, search, tags, and undo/redo are not implemented yet.
-- Browser interaction and the first Pages deployment still need end-to-end verification before the app should be considered production-ready.
+- A successful Pages deployment is recorded in GitHub Actions, but direct browser/device smoke tests and accessibility checks remain outstanding.
+- The Supabase migration defines the security-oriented database foundation only; no frontend Supabase client or authentication flow is wired up yet.
 
 ## Screenshots
 
