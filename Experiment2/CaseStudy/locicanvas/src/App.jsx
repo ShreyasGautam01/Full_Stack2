@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { parsePalaceStorage, pointerToCanvasPercent, moveMarkerInPalaces, serializePalaceStorage } from './domain/palaceModel.js';
 import {
   Box,
   Typography,
@@ -33,13 +34,10 @@ import {
   InputLabel,
   Stack,
   alpha,
-  Slider
 } from '@mui/material';
 import {
   Add as AddIcon,
   Book as BookIcon,
-  Close as CloseIcon,
-  Save as SaveIcon,
   Collections as CollectionsIcon,
   ArrowBack as ArrowBackIcon,
   Edit as EditIcon,
@@ -48,8 +46,6 @@ import {
   Delete as DeleteIcon,
   Note as NoteIcon,
   Settings as SettingsIcon,
-  Palette as PaletteIcon,
-  Image as ImageIcon
 } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -85,6 +81,22 @@ const theme = createTheme({
 
 // --- CONSTANTS ---
 const STORAGE_KEY = 'locicanvas_v2_data';
+const RECOVERY_KEY = 'locicanvas_v2_data_recovery';
+
+function loadSavedPalaces() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (!saved) return { palaces: INITIAL_DATA, issue: '' };
+    try {
+      return { palaces: parsePalaceStorage(saved), issue: '' };
+    } catch {
+      try { localStorage.setItem(RECOVERY_KEY, saved); } catch { /* Storage may be unavailable. */ }
+      return { palaces: INITIAL_DATA, issue: 'Saved data could not be read. A recovery copy was preserved when browser storage allowed it; the sample collection is loaded until the saved data is recovered.' };
+    }
+  } catch {
+    return { palaces: INITIAL_DATA, issue: 'Browser storage is unavailable. Changes may not persist after this session.' };
+  }
+}
 const INITIAL_DATA = [
   {
     id: 'root',
@@ -120,7 +132,8 @@ const GlassCard = ({ children, sx }) => (
   </Paper>
 );
 
-const Marker = ({ item, onClick, isEditMode, onDelete }) => {
+const Marker = ({ item, onClick, isEditMode, onDelete, onMove }) => {
+  const dragRef = useRef(null);
   const isGateway = item.type === 'gateway';
   const itemColor = item.color || DEFAULT_THEME_COLOR;
   
@@ -129,8 +142,37 @@ const Marker = ({ item, onClick, isEditMode, onDelete }) => {
       initial={{ scale: 0, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
       whileHover={{ scale: 1.2, zIndex: 100 }}
-      style={{ position: 'absolute', top: `${item.y}%`, left: `${item.x}%`, transform: 'translate(-50%, -50%)', cursor: 'pointer', zIndex: 10 }}
-      onClick={(e) => { e.stopPropagation(); onClick(item); }}
+      style={{ position: 'absolute', top: `${item.y}%`, left: `${item.x}%`, transform: 'translate(-50%, -50%)', cursor: isEditMode ? 'grab' : 'pointer', touchAction: isEditMode ? 'none' : 'auto', zIndex: 10 }}
+      onPointerDown={(event) => {
+        if (!isEditMode || event.button !== 0 || event.target.closest('button')) return;
+        event.stopPropagation();
+        event.currentTarget.setPointerCapture(event.pointerId);
+        dragRef.current = { pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, moved: false };
+      }}
+      onPointerMove={(event) => {
+        const drag = dragRef.current;
+        if (!isEditMode || !drag || drag.pointerId !== event.pointerId) return;
+        if (Math.hypot(event.clientX - drag.startX, event.clientY - drag.startY) > 3) drag.moved = true;
+        if (!drag.moved) return;
+        const rect = event.currentTarget.parentElement?.getBoundingClientRect();
+        const position = pointerToCanvasPercent(event.clientX, event.clientY, rect);
+        if (position) onMove(item.id, position.x, position.y);
+      }}
+      onPointerUp={(event) => {
+        if (dragRef.current?.pointerId === event.pointerId) {
+          if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
+        }
+      }}
+      onPointerCancel={() => { dragRef.current = null; }}
+      onClick={(e) => {
+        e.stopPropagation();
+        if (dragRef.current?.moved) {
+          dragRef.current = null;
+          return;
+        }
+        dragRef.current = null;
+        onClick(item);
+      }}
     >
       <Tooltip title={isEditMode ? `${item.title} (Right-click to delete)` : item.title} arrow>
         <Box sx={{ 
@@ -160,15 +202,12 @@ const Marker = ({ item, onClick, isEditMode, onDelete }) => {
 // --- MAIN APPLICATION ---
 export default function App() {
   // --- GLOBAL DATA STATE ---
-  const [palaces, setPalaces] = useState(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      return saved ? JSON.parse(saved) : INITIAL_DATA;
-    } catch (e) { return INITIAL_DATA; }
-  });
+  const [initialStorage] = useState(() => loadSavedPalaces());
+  const [palaces, setPalaces] = useState(initialStorage.palaces);
+  const [storageIssue, setStorageIssue] = useState(initialStorage.issue);
   
   // --- NAVIGATION STATE ---
-  const [navStack, setNavStack] = useState(['root']);
+  const [navStack, setNavStack] = useState(() => [initialStorage.palaces[0]?.id || 'root']);
   const currentLevelId = navStack[navStack.length - 1];
   const currentLevel = useMemo(() => palaces.find(p => p.id === currentLevelId) || palaces[0], [palaces, currentLevelId]);
 
@@ -187,11 +226,19 @@ export default function App() {
   const [editingItem, setEditingItem] = useState(null); // The item object being edited
   const [gatewayDialogOpen, setGatewayDialogOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false); // Palace settings
+  const [newEnvironmentOpen, setNewEnvironmentOpen] = useState(false);
 
   // --- PERSISTENCE EFFECT ---
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(palaces));
-  }, [palaces]);
+    if (initialStorage.issue && palaces === initialStorage.palaces) return;
+
+    try {
+      localStorage.setItem(STORAGE_KEY, serializePalaceStorage(palaces));
+      setStorageIssue('');
+    } catch {
+      setStorageIssue('Changes could not be saved to browser storage. Export or copy important content before leaving this page.');
+    }
+  }, [palaces, initialStorage]);
 
   // --- REVEAL ANIMATION ---
   useEffect(() => {
@@ -205,9 +252,9 @@ export default function App() {
   const handleCanvasClick = (event) => {
     if (!editMode) return;
     const rect = event.currentTarget.getBoundingClientRect();
-    const x = ((event.clientX - rect.left) / rect.width) * 100;
-    const y = ((event.clientY - rect.top) / rect.height) * 100;
-    setClickPos({ x, y });
+    const position = pointerToCanvasPercent(event.clientX, event.clientY, rect);
+    if (!position) return;
+    setClickPos(position);
     setContextMenu(contextMenu === null ? { mouseX: event.clientX - 2, mouseY: event.clientY - 4 } : null);
   };
 
@@ -241,6 +288,10 @@ export default function App() {
     }));
     setEditorOpen(false);
     setEditingItem(null);
+  };
+
+  const handleMoveMarker = (itemId, x, y) => {
+    setPalaces((prev) => moveMarkerInPalaces(prev, currentLevelId, itemId, x, y));
   };
 
   const handleDeleteItem = (itemId) => {
@@ -284,15 +335,26 @@ export default function App() {
 
   // --- CORE LOGIC: ENVIRONMENT SETTINGS ---
   const handleUpdateEnvironment = (newName, newUrl) => {
-    setPalaces(prev => prev.map(p => p.id === currentLevelId ? { ...p, name: newName, imageUrl: newUrl } : p));
+    const trimmedName = newName.trim();
+    if (!trimmedName) return;
+    setPalaces(prev => prev.map(p => p.id === currentLevelId ? { ...p, name: trimmedName, imageUrl: newUrl.trim() } : p));
     setSettingsOpen(false);
   };
 
   const handleCreateNewEnvironment = (name, url) => {
-      const newId = `palace-${Date.now()}`;
-      const newPalace = { id: newId, name, imageUrl: url, items: [] };
-      setPalaces([...palaces, newPalace]);
-      setNavStack([newId]);
+    const trimmedName = name.trim();
+    if (!trimmedName) return;
+    const newId = `palace-${Date.now()}`;
+    const newPalace = {
+      id: newId,
+      name: trimmedName,
+      imageUrl: url.trim() || 'https://images.unsplash.com/photo-1516528387618-afa90b13e000?auto=format&fit=crop&q=80&w=2000',
+      items: [],
+    };
+    setPalaces((prev) => [...prev, newPalace]);
+    setNavStack([newId]);
+    setNewEnvironmentOpen(false);
+    setSidebarOpen(false);
   };
 
   return (
@@ -378,10 +440,15 @@ export default function App() {
                   key={item.id} 
                   item={item} 
                   isEditMode={editMode} 
-                  onDelete={handleDeleteItem} 
+                  onDelete={handleDeleteItem}
+                  onMove={handleMoveMarker}
                   onClick={(it) => {
                     if (it.type === 'gateway') {
-                      setNavStack([...navStack, it.targetId]);
+                      if (palaces.some((palace) => palace.id === it.targetId)) {
+                        setNavStack((prev) => [...prev, it.targetId]);
+                      } else {
+                        setStorageIssue('This gateway points to an environment that no longer exists. Delete or repair the gateway.');
+                      }
                     } else {
                       setEditingItem(it);
                       setEditorOpen(true);
@@ -421,7 +488,8 @@ export default function App() {
           PaperProps={{ sx: { borderRadius: 4, bgcolor: '#1a1f26', minWidth: 400, border: '1px solid rgba(255,255,255,0.1)' } }}
         >
           {editingItem && (
-            <NoteEditorForm 
+            <NoteEditorForm
+              key={editingItem.id}
               initialItem={editingItem} 
               onSave={handleSaveNote} 
               onDelete={handleDeleteItem}
@@ -452,6 +520,16 @@ export default function App() {
           )}
         </Dialog>
 
+        <Dialog open={newEnvironmentOpen} onClose={() => setNewEnvironmentOpen(false)}>
+          <EnvironmentSettingsForm
+            mode="create"
+            currentName=""
+            currentUrl=""
+            onSave={handleCreateNewEnvironment}
+            onCancel={() => setNewEnvironmentOpen(false)}
+          />
+        </Dialog>
+
         {/* 5. Sidebar */}
         <Drawer anchor="left" open={sidebarOpen} onClose={() => setSidebarOpen(false)} PaperProps={{ sx: { width: 320, bgcolor: '#0f1217' } }}>
           <Box sx={{ p: 3 }}>
@@ -471,12 +549,35 @@ export default function App() {
                 </ListItem>
               ))}
             </List>
-            <Button fullWidth startIcon={<AddIcon />} variant="outlined" sx={{ mt: 2 }} onClick={() => setSettingsOpen(true)}>
-                New Environment...
+            <Button fullWidth startIcon={<AddIcon />} variant="outlined" sx={{ mt: 2 }} onClick={() => { setSidebarOpen(false); setNewEnvironmentOpen(true); }}>
+              New Environment
             </Button>
-            {/* Note: This button opens settings for creating NEW env logic in real app, simplified here to reuse settings or add new dialog logic if needed */}
           </Box>
         </Drawer>
+
+        <Dialog open={helpOpen} onClose={() => setHelpOpen(false)} PaperProps={{ sx: { bgcolor: '#1a1f26', color: 'white', maxWidth: 520, m: 2 } }}>
+          <Box sx={{ p: 4 }}>
+            <Typography variant="h5" sx={{ mb: 2 }}>LociCanvas Guide</Typography>
+            <Typography sx={{ mb: 1 }}>Build a memory palace by placing ideas at meaningful locations in a visual environment.</Typography>
+            <Typography variant="subtitle1" sx={{ mt: 2, fontWeight: 700 }}>Explore</Typography>
+            <Typography variant="body2">Select a memory marker to read or edit its note. Select a gateway marker to travel to its linked environment. Use the collection button to open any palace.</Typography>
+            <Typography variant="subtitle1" sx={{ mt: 2, fontWeight: 700 }}>Design</Typography>
+            <Typography variant="body2">Turn on Design Mode, then click an empty area to place a memory or gateway. Drag existing markers to reposition them while Design Mode is active.</Typography>
+            <Typography variant="subtitle1" sx={{ mt: 2, fontWeight: 700 }}>Organize</Typography>
+            <Typography variant="body2">Use the settings control to rename the current environment or change its background. Use Palace Collection to create another environment.</Typography>
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 3 }}>
+              <Button variant="contained" onClick={() => setHelpOpen(false)}>Got it</Button>
+            </Box>
+          </Box>
+        </Dialog>
+
+        {storageIssue && (
+          <Snackbar open anchorOrigin={{ vertical: 'top', horizontal: 'center' }}>
+            <Alert severity="warning" onClose={() => setStorageIssue('')} sx={{ maxWidth: 600 }}>
+              {storageIssue}
+            </Alert>
+          </Snackbar>
+        )}
 
         {/* Help Button */}
         <Box sx={{ position: 'absolute', bottom: 30, right: 30 }}>
@@ -509,7 +610,11 @@ function NoteEditorForm({ initialItem, onSave, onDelete, onCancel }) {
       
       <TextField 
         fullWidth autoFocus label="Title" variant="filled" sx={{ mb: 3 }}
-        value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})}
+        value={formData.title}
+        inputProps={{ maxLength: 120 }}
+        onChange={e => setFormData({...formData, title: e.target.value})}
+        error={!formData.title.trim()}
+        helperText={!formData.title.trim() ? 'A title is required.' : ' '}
       />
       
       <TextField 
@@ -542,7 +647,7 @@ function NoteEditorForm({ initialItem, onSave, onDelete, onCancel }) {
         </IconButton>
         <Box sx={{ display: 'flex', gap: 2 }}>
           <Button onClick={onCancel} color="inherit">Cancel</Button>
-          <Button variant="contained" onClick={() => onSave(formData)} sx={{ bgcolor: accentColor, '&:hover': { bgcolor: accentColor } }}>
+          <Button disabled={!formData.title.trim()} variant="contained" onClick={() => onSave({ ...formData, title: formData.title.trim() })} sx={{ bgcolor: accentColor, '&:hover': { bgcolor: accentColor } }}>
             Save
           </Button>
         </Box>
@@ -593,24 +698,34 @@ function GatewaySetupForm({ palaces, currentId, onSubmit, onCancel }) {
 
       <Box sx={{ mt: 4, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
         <Button onClick={onCancel}>Cancel</Button>
-        <Button variant="contained" onClick={handleSubmit} disabled={mode === 'existing' && !targetId}>Create Link</Button>
+        <Button variant="contained" onClick={handleSubmit} disabled={mode === 'existing' ? !targetId : !newName.trim()}>Create Link</Button>
       </Box>
     </Box>
   );
 }
 
-function EnvironmentSettingsForm({ currentName, currentUrl, onSave, onCancel }) {
+function EnvironmentSettingsForm({ currentName, currentUrl, onSave, onCancel, mode = 'edit' }) {
   const [name, setName] = useState(currentName);
   const [url, setUrl] = useState(currentUrl);
 
   return (
     <Box sx={{ p: 4, width: 400 }}>
-      <Typography variant="h6" sx={{ mb: 3 }}>Environment Settings</Typography>
-      <TextField fullWidth label="Environment Name" value={name} onChange={e => setName(e.target.value)} sx={{ mb: 3 }} />
+      <Typography variant="h6" sx={{ mb: 3 }}>{mode === 'create' ? 'New Environment' : 'Environment Settings'}</Typography>
+      <TextField
+        fullWidth
+        label="Environment Name"
+        value={name}
+        onChange={e => setName(e.target.value)}
+        inputProps={{ maxLength: 80 }}
+        sx={{ mb: 3 }}
+        required
+      />
       <TextField fullWidth label="Background Image URL" value={url} onChange={e => setUrl(e.target.value)} sx={{ mb: 3 }} />
       <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
         <Button onClick={onCancel}>Cancel</Button>
-        <Button variant="contained" onClick={() => onSave(name, url)}>Update Environment</Button>
+        <Button variant="contained" disabled={!name.trim()} onClick={() => onSave(name, url)}>
+          {mode === 'create' ? 'Create Environment' : 'Update Environment'}
+        </Button>
       </Box>
     </Box>
   );

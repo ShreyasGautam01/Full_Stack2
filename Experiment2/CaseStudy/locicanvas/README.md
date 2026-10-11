@@ -1,64 +1,72 @@
-CaseStudy: Digital Memory Palace
-LociCanvas is an immersive, visual memory tool based on the ancient Method of Loci. It allows users to anchor digital notes (memories) to specific locations within "palaces" (customizable background images) and link different environments together via interactive gateways.
+# LociCanvas
 
-✨ Key Features
-Visual Memory Anchors: Place "Memory Markers" anywhere on a high-definition canvas.
-Interconnected Environments: Use "Gateways" to link different rooms or palaces, creating a navigable mental map.
-Design Mode: A toggleable interface to add, move, or delete memories and gateways with a simple right-click/context menu.
-Color Harmony: Categorize memories using a curated palette (Sage, Lavender, Coral, etc.) for better visual recall.
-Glassmorphism UI: A sleek, modern interface built with Material UI and Framer Motion for smooth transitions and depth.
-Local Persistence: Automatically saves your entire palace collection to the browser's localStorage.
+LociCanvas is a visual digital memory palace based on the Method of Loci. Create virtual environments, place notes at meaningful positions, and connect environments using gateway markers.
 
-🛠️ Tech Stack
-Framework: React
-Styling & UI: Material UI (MUI) v5
-Animations: Framer Motion
-Icons: MUI Icons
-State Management: React Hooks (useState, useEffect, useMemo)
+## Current features
 
-📂 Project Structure
-The app.jsx file is a self-contained module organized into several logical sections:
-Constants & Theme: Defines the dark-mode aesthetic and the initial "Grand Library" data.
-Helper Components:
-GlassCard: A reusable blurred-background container.
-Marker: The interactive point on the canvas representing a note or gateway.
-Main Application (App): Manages the navigation stack, edit-mode logic, and canvas coordinate calculations.
-Form Modules:
-NoteEditorForm: For creating and styling memories.
-GatewaySetupForm: For linking existing environments or generating new ones.
-EnvironmentSettingsForm: For updating palace names and backgrounds.
+- Visual palace environments with background image URLs.
+- Memory notes with title, content, and accent colors.
+- Gateway markers linking environments.
+- Breadcrumb and collection navigation.
+- Design mode for adding memories and gateways.
+- Drag markers to reposition them while Design Mode is active.
+- Create environments from the Palace Collection drawer.
+- Built-in guide dialog.
+- Browser-local persistence using a versioned JSON envelope, with support for reading the older array format.
+- Validation of saved palace/marker structure and broken gateway references.
 
-📖 How to Use
-1. Navigating
-Click on a Gateway (the larger circular icons) to "travel" to a different room.
-Use the Breadcrumbs at the top to jump back to previous levels.
-Open the Sidebar (Collections icon) to see an overview of all created palaces.
+## Technology
 
-2. Design Mode
-Click the Design Mode button to enable editing.
-Click anywhere on the background image to open the context menu.
-Choose Place Memory to create a note or Open Gateway to link to another palace.
-Right-click (or click the 'X' in edit mode) to delete existing markers.
+- React 19 and Vite 7
+- Material UI 7
+- Framer Motion 12
+- Browser `localStorage` (current persistence; no accounts or cloud sync yet)
+- Node.js test runner for domain-level tests
 
-3. Customizing
-Click the Settings icon next to the palace name to change the background image URL.
-Tip: Use high-quality architectural or landscape photos from Unsplash for the best immersion.
+## Run locally
 
-⚙️ Installation
-To run this file in a React environment, ensure you have the following dependencies installed:
-npm install @mui/material @emotion/react @emotion/styled @mui/icons-material framer-motion
-Create a standard React project (e.g., via Vite).
+Use a current Node.js LTS release, then from this directory:
 
-Replace the contents of your App.jsx with the provided code.
+```sh
+npm ci
+npm run dev
+```
 
-Ensure you have the Quicksand font imported in your index.html for the intended typography:
+Vite prints the local development URL. To run the available checks:
 
-HTML
-<link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;700&display=swap" rel="stylesheet">
+```sh
+npm test
+npm run lint
+npm run build
+```
+
+## Data persistence and recovery
+
+The application uses the browser storage key `locicanvas_v2_data`. New saves use an envelope containing `schemaVersion` and `palaces`; existing valid array-format data is still read and migrated on the next successful save.
+
+If saved data is malformed or fails structural validation, the app attempts to preserve the raw value under `locicanvas_v2_data_recovery` and loads the sample collection instead of silently treating malformed data as an empty collection. Browser storage may be unavailable or full, so this recovery copy is best-effort. Do not clear site data if you need to recover a previous collection.
+
+Data is still local to a browser profile and origin. It is not synchronized across devices, and clearing browser storage can remove it. Cloud accounts, database persistence, and deployment are planned separately; they are not implemented in this phase.
+
+## Project structure
+
+- `src/App.jsx`: application UI and interactions.
+- `src/domain/palaceModel.js`: pure coordinate, movement, storage parsing/serialization, and gateway-cleanup operations.
+- `src/domain/palaceModel.test.js`: tests for domain operations and data validation.
+- `vite.config.js`: Vite configuration.
+- `IMPROVEMENT_PLAN.md`: phased multi-user upgrade plan and architecture decisions.
+
+## Current limitations
+
+- No authentication, cloud database, or cross-device synchronization.
+- No background-image upload; backgrounds are supplied as URLs.
+- Palace deletion UI, search, tags, undo/redo, and portable JSON export/import are not implemented yet.
+- Browser interaction and deployment still need end-to-end verification before the app should be considered production-ready.
 
 ## Screenshots
-![alt text](Screenshots/1.png)
-![alt text](Screenshots/2.png)
-![alt text](Screenshots/3.png)
-![alt text](Screenshots/4.png)
-![alt text](Screenshots/5.png)
+
+![LociCanvas screenshot 1](Screenshots/1.png)
+![LociCanvas screenshot 2](Screenshots/2.png)
+![LociCanvas screenshot 3](Screenshots/3.png)
+![LociCanvas screenshot 4](Screenshots/4.png)
+![LociCanvas screenshot 5](Screenshots/5.png)
