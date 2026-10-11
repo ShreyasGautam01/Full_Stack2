@@ -1,6 +1,6 @@
 # LociCanvas v2 — Improvement Plan
 
-**Status:** Phase 0 — discovery and architecture review  
+**Status:** Phase 1 — local-first stabilization in progress  
 **Scope:** `Experiment2/CaseStudy/locicanvas`  
 **Planning branch:** `project-improvement/locicanvas-v2-roadmap`  
 **Baseline branch:** `main` (kept unchanged by the planning work)
@@ -209,6 +209,28 @@ The application is not a multi-user MVP until:
 - **Firestore is not inherently unsuitable.** It supports subcollections and collection-group queries, but relational constraints are a better fit here. The supposed N+1 gateway traversal problem is not proven by the inspected code; the current app keeps palace data in one in-memory collection and has no cloud traversal implementation yet.
 - **GitHub Pages deep-link failure is conditional.** The existing app does not currently navigate using palace IDs in URL paths. A fallback/routing decision is needed if path-based routes are added, not a reason by itself to abandon Pages today.
 - **Free-tier behavior must be checked at release time.** Budget assumptions and idle pausing are operational risks to plan for, not stable guarantees.
+
+## 7. Execution log
+
+### Phase 1 — initial implementation pass
+
+**Committed to the planning branch; runtime/browser verification remains outstanding.**
+
+- Added `src/domain/palaceModel.js` for bounded percentage coordinates, pointer-to-canvas conversion, marker movement, safe gateway cleanup on palace deletion, versioned local-storage serialization, and validation of legacy/versioned saved collections.
+- Added `src/domain/palaceModel.test.js` covering coordinate bounds, coordinate conversion, marker updates, gateway cleanup, legacy/versioned storage, and malformed/broken-gateway data.
+- Added `npm test` using Node's built-in test runner.
+- Implemented marker dragging in Design Mode and guarded the delete control against accidental drag capture.
+- Fixed the Palace Collection's New Environment action and added a help dialog.
+- Added required-title validation, safer environment naming, and a broken-gateway navigation warning.
+- Changed saved data writes to a versioned envelope while continuing to read the previous array format.
+- Added best-effort preservation of malformed saved data under `locicanvas_v2_data_recovery`; the initial recovery state is not immediately written over the malformed active key.
+- Updated the README to reflect the actual MUI version, current behavior, local setup, checks, persistence format, and known limitations.
+
+**Verification performed:** the six domain test cases passed under Node.js 22.16.0 in an isolated local test run using the committed domain logic and test cases.
+
+**Not yet verified:** full `npm test` against a local checkout, `npm run lint`, `npm run build`, visual/browser interactions, keyboard/screen-reader behavior, mobile layout, and deployment. A direct Git clone could not be completed in the execution environment because it could not resolve `github.com`; therefore no claim is made that the full application build or browser test has passed. These checks must be run after obtaining a local checkout or through repository CI.
+
+**Known remaining Phase 1 work:** validate background URLs; complete gateway/new-environment form validation; add export/import and a deliberate local recovery UI; test marker dragging under actual browser pointer capture; improve responsive dialog sizing; and establish a repeatable CI result before beginning cloud integration.
 
 ## References
 
