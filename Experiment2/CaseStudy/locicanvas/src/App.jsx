@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { deletePalaceAndIncomingGateways, parsePalaceStorage, pointerToCanvasPercent, moveMarkerInPalaces, serializePalaceStorage } from './domain/palaceModel.js';
+import { parsePalaceStorage, pointerToCanvasPercent, moveMarkerInPalaces, serializePalaceStorage } from './domain/palaceModel.js';
 import {
   Box,
   Typography,
@@ -205,7 +205,6 @@ export default function App() {
   const [initialStorage] = useState(() => loadSavedPalaces());
   const [palaces, setPalaces] = useState(initialStorage.palaces);
   const [storageIssue, setStorageIssue] = useState(initialStorage.issue);
-  const persistenceMounted = useRef(false);
   
   // --- NAVIGATION STATE ---
   const [navStack, setNavStack] = useState(() => [initialStorage.palaces[0]?.id || 'root']);
@@ -231,10 +230,7 @@ export default function App() {
 
   // --- PERSISTENCE EFFECT ---
   useEffect(() => {
-    if (!persistenceMounted.current) {
-      persistenceMounted.current = true;
-      if (initialStorage.issue) return;
-    }
+    if (initialStorage.issue && palaces === initialStorage.palaces) return;
 
     try {
       localStorage.setItem(STORAGE_KEY, serializePalaceStorage(palaces));
@@ -242,7 +238,7 @@ export default function App() {
     } catch {
       setStorageIssue('Changes could not be saved to browser storage. Export or copy important content before leaving this page.');
     }
-  }, [palaces, initialStorage.issue]);
+  }, [palaces, initialStorage]);
 
   // --- REVEAL ANIMATION ---
   useEffect(() => {
