@@ -254,6 +254,17 @@ The application is not a multi-user MVP until:
 
 **Deployment status:** workflow prepared, not yet deployed or live-verified. This execution environment cannot change the repository's Pages setting. After merging the deployment PR, set Settings → Pages → Source to GitHub Actions and inspect the workflow result. The deployed app remains localStorage-only; Supabase authentication and cloud persistence are still Phase 2 and are not implied by static hosting.
 
+### Phase 2 — Supabase schema foundation (in review)
+
+- Added `supabase/config.toml` and a versioned migration defining owner-scoped `palaces` and `markers` tables.
+- Added RLS policies for select, insert, update, and delete on both tables; table grants are limited to authenticated users.
+- Added composite owner-aware foreign keys so a marker cannot reference another owner's palace and a gateway cannot target another owner's palace.
+- Added database checks for nonblank bounded names/titles, HTTPS background URLs, supported marker types, percentage coordinates, color format, and the gateway/destination invariant.
+- Added indexes for owner-scoped queries and update-time triggers.
+- Documented project linking, migration preview/application, safe publishable-key configuration, local-to-cloud ID remapping, and required two-account isolation checks in `SUPABASE_SETUP.md`.
+- **Not implemented by this schema-only phase:** frontend Supabase client, sign-up/sign-in UI, cloud repository, local-data import into cloud, or cross-device synchronization. Do not claim cloud support until these are implemented and verified.
+- **Verification limitation:** the existing CI validates JavaScript tests/lint/build, not PostgreSQL syntax or live RLS behavior. The migration must be applied to a development project and the documented two-account checks must pass before enabling frontend cloud writes.
+
 ## References
 
 - [Vite static deployment guide — GitHub Pages](https://vite.dev/guide/static-deploy)
