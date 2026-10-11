@@ -50,7 +50,7 @@ The application uses the browser storage key `locicanvas_v2_data`. New saves use
 
 If saved data is malformed or fails structural validation, the app attempts to preserve the raw value under `locicanvas_v2_data_recovery` and loads the sample collection instead of silently treating malformed data as an empty collection. Browser storage may be unavailable or full, so this recovery copy is best-effort. Do not clear site data if you need to recover a previous collection.
 
-Data is still local to a browser profile and origin. It is not synchronized across devices, and clearing browser storage can remove it. Cloud accounts, database persistence, and deployment are planned separately; they are not implemented in this phase.
+Data is still local to a browser profile and origin. It is not synchronized across devices, and clearing browser storage can remove it. Cloud accounts and database persistence are not implemented yet. Static hosting does not change the localStorage-only behavior.
 
 ## Project structure
 
