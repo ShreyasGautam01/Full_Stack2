@@ -53,8 +53,8 @@ export function parsePalaceStorage(raw) {
       ? parsed.palaces
       : null;
 
-  if (!palaces) {
-    throw new Error('Unsupported or malformed LociCanvas data format.');
+  if (!palaces || palaces.length === 0) {
+    throw new Error('Unsupported or empty LociCanvas data format.');
   }
 
   const palaceIds = new Set();
