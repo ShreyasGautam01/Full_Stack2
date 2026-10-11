@@ -1,6 +1,6 @@
 # LociCanvas v2 — Improvement Plan
 
-**Status:** Phase 1 — local-first stabilization in progress  
+**Status:** Phase 1 — stabilization and CI established; final verification in progress  
 **Scope:** `Experiment2/CaseStudy/locicanvas`  
 **Planning branch:** `project-improvement/locicanvas-v2-roadmap`  
 **Baseline branch:** `main` (kept unchanged by the planning work)
@@ -231,6 +231,17 @@ The application is not a multi-user MVP until:
 **Not yet verified:** full `npm test` against a local checkout, `npm run lint`, `npm run build`, visual/browser interactions, keyboard/screen-reader behavior, mobile layout, and deployment. A direct Git clone could not be completed in the execution environment because it could not resolve `github.com`; therefore no claim is made that the full application build or browser test has passed. These checks must be run after obtaining a local checkout or through repository CI.
 
 **Known remaining Phase 1 work:** validate background URLs; complete gateway/new-environment form validation; add export/import and a deliberate local recovery UI; test marker dragging under actual browser pointer capture; improve responsive dialog sizing; and establish a repeatable CI result before beginning cloud integration.
+
+### Phase 1 — follow-up hardening pass (in review)
+
+- Added HTTPS URL validation for newly entered or edited environment backgrounds and gateway-created environments; blank URLs remain allowed and use the app's fallback behavior where configured.
+- Replaced timestamp-only palace/gateway IDs with UUID-backed IDs when available, plus a fallback for environments without `crypto.randomUUID`.
+- Added validated JSON backup export and paste-based import with a confirmation before replacing the current local collection.
+- Added an in-app attempt to restore the best-effort preserved malformed-data recovery copy.
+- Made note, gateway, settings, and environment creation dialogs use responsive widths.
+- Added tests for HTTPS URL validation and generated ID uniqueness.
+
+**Verification status:** changes are committed to `feat/locicanvas-phase1-completion` and require the new GitHub Actions run. Do not consider the phase complete until CI passes and browser checks verify import/export, recovery, URL validation, and marker dragging. Import uses pasted JSON rather than a file picker in this pass.
 
 ## References
 
