@@ -59,6 +59,8 @@ Data is still local to a browser profile and origin. It is not synchronized acro
 - `src/domain/palaceModel.test.js`: tests for domain operations and data validation.
 - `vite.config.js`: Vite configuration.
 - `IMPROVEMENT_PLAN.md`: phased multi-user upgrade plan and architecture decisions.
+- `supabase/migrations/`: version-controlled PostgreSQL schema and RLS policies.
+- `SUPABASE_SETUP.md`: database setup, migration deployment, and cloud-security verification checklist.
 
 ## GitHub Pages deployment
 
@@ -68,7 +70,7 @@ Before its first successful deployment, open **Repository Settings → Pages →
 
 Expected site URL: https://shreyasgautam01.github.io/Full_Stack2/
 
-GitHub Pages only serves the static frontend. This version continues to store data in the current browser's localStorage; it does **not** yet offer accounts, shared cloud data, or cross-device synchronization.
+GitHub Pages only serves the static frontend. The deployment workflow has completed successfully, but this version continues to store data in the current browser's localStorage; it does **not** yet offer accounts, cloud persistence, or cross-device synchronization. The Supabase schema foundation is being added separately; the frontend must not be considered cloud-connected until the authentication and repository integration is implemented.
 
 ## Current limitations
 
@@ -77,7 +79,8 @@ GitHub Pages only serves the static frontend. This version continues to store da
 - Import currently accepts pasted JSON backup content; direct file-picker import is not implemented.
 - Browser-local recovery remains best-effort and depends on browser storage being accessible.
 - Palace deletion UI, search, tags, and undo/redo are not implemented yet.
-- Browser interaction and the first Pages deployment still need end-to-end verification before the app should be considered production-ready.
+- A successful Pages deployment is recorded in GitHub Actions, but direct browser/device smoke tests and accessibility checks remain outstanding.
+- The Supabase migration defines the security-oriented database foundation only; no frontend Supabase client or authentication flow is wired up yet.
 
 ## Screenshots
 
