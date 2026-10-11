@@ -1,9 +1,9 @@
 # LociCanvas v2 — Improvement Plan
 
-**Status:** Phase 0 — discovery and architecture plan  
+**Status:** Phase 0 — discovery and architecture review  
 **Scope:** `Experiment2/CaseStudy/locicanvas`  
 **Planning branch:** `project-improvement/locicanvas-v2-roadmap`  
-**Baseline branch:** `main` (kept unchanged by this planning phase)
+**Baseline branch:** `main` (kept unchanged by the planning work)
 
 ## Product direction
 
@@ -17,143 +17,205 @@ The first release should make each user's palace collection private, available a
 
 - React 19 + Vite 7, Material UI 7, Framer Motion 12; scripts currently include `dev`, `build`, `lint`, and `preview`.
 - Main UI and most feature logic are in `src/App.jsx` (about 24 KB); `src/App.css` and `src/index.css` are currently empty.
-- The domain model is an array of palaces/environments. Each palace has an `id`, `name`, `imageUrl`, and an `items` array. Items are either memory notes or gateways. Marker coordinates are stored as percentages of the canvas.
+- The domain model is an array of palaces/environments. Each palace has an `id`, `name`, `imageUrl`, and an `items` array. Items are either memory notes or gateways. Marker coordinates are stored as percentages.
 - Existing features include a sample Grand Library and Oak Desk, positioned memory notes, note editing and accent colors, gateway creation to an existing or new palace, background image URLs, breadcrumbs, a palace drawer, design mode, and animated environment transitions.
-- Persistence uses the `locicanvas_v2_data` key in browser `localStorage`. It is device/browser-origin local state, not shared cloud storage or account-aware persistence.
-- The README describes moving markers and a working help guide; the inspected implementation has no marker drag handler and the help button changes state without rendering a help dialog. The drawer's “New Environment” action opens the current environment settings, while a separate new-environment handler exists but is not wired into the visible flow.
-- The README says MUI v5, while `package.json` currently declares MUI v7. Documentation should be updated to match the actual project.
+- Persistence uses the `locicanvas_v2_data` key in browser `localStorage`. It is local to the browser origin and device profile, not shared cloud storage or account-aware persistence.
+- The README describes moving markers and a working help guide; the inspected implementation has no marker drag handler and the help button changes state without rendering a help dialog. The drawer's “New Environment” action opens current environment settings, while a separate new-environment handler exists but is not wired into that visible flow.
+- The README describes MUI v5, while `package.json` currently declares MUI v7. Documentation should match the actual dependencies.
 
 ### Main risks / gaps
 
 1. **No identity or data isolation.** There is no sign-in flow, owner identity, cloud database, or cross-device synchronization.
-2. **Persistence has no recovery path.** The browser-local data has no cloud backup, export/import flow, schema migration, or sync/error indicator.
-3. **Incomplete interactions.** Marker movement, first-class environment creation/management, and the guide need a deliberate end-to-end implementation.
-4. **Monolithic component.** Application state, persistence, navigation, dialogs, and reusable UI are coupled inside one large file.
-5. **Validation and resilience.** Titles, content, image URLs, coordinates, missing gateway targets, storage failures, and malformed saved data need explicit handling.
+2. **Persistence has no recovery path.** The browser-local data has no built-in export/import flow, schema migration, or save/error indicator.
+3. **Incomplete interactions.** Marker movement, first-class environment creation/management, and the guide need end-to-end implementation.
+4. **Monolithic component.** Application state, persistence, navigation, dialogs, and reusable UI are coupled in one large file.
+5. **Validation and resilience.** Names, note content, image URLs, coordinates, missing gateway targets, storage failures, and malformed saved data need explicit handling.
 6. **Responsive/accessibility quality.** Fixed-width dialogs and a full-viewport, overflow-hidden layout need mobile testing, keyboard access, visible focus, and accessible control labels.
-7. **No visible automated test suite or CI quality gate.** A build/lint baseline and domain/data-isolation tests should be added before broad refactoring.
+7. **No evident automated test suite or CI quality gate.** Add a reproducible build/lint baseline and tests for domain logic, migration, and account isolation before release.
 
-These are observations from the current source, not claims that the application has undergone a runtime or security test. The app has not yet been run in a local browser as part of this planning phase.
+These are source-inspection observations, not claims that the application has undergone a runtime or security audit. The application has not yet been run in a local browser as part of this planning phase.
 
-## 2. Recommended deployment architecture
+## 2. Architecture decision after independent critique
 
-### Frontend: GitHub Pages
+### Recommended initial stack
 
-Build the existing Vite/React app and publish its static `dist` output with GitHub Actions. GitHub Pages is suitable for static HTML, CSS, and JavaScript; it does not itself run the application's database or backend API.
+- **Frontend:** existing React + Vite app, hosted as static files on GitHub Pages.
+- **Authentication:** Supabase Auth.
+- **Persistent data:** Supabase PostgreSQL.
+- **Authorization:** PostgreSQL Row-Level Security (RLS), enabled and tested for every user-accessible table.
+- **File storage:** defer uploads; use validated HTTPS background-image URLs for the initial release. Reconsider Supabase Storage when image uploads are a validated requirement.
+- **CI/CD:** GitHub Actions for install, lint, unit tests, production build, and deployment.
 
-Because this application is nested in the `Full_Stack2` repository, the Vite build must use the project Pages base path (typically `/Full_Stack2/`) and the workflow must build from `Experiment2/CaseStudy/locicanvas`. Validate asset paths and direct-refresh behavior after deployment.
+### Why Supabase/PostgreSQL is the recommended default
 
-### Managed backend: Firebase (recommended for the first implementation)
+LociCanvas has explicit relationships: a marker belongs to one palace, and a gateway points to another palace. These relationships matter when a target palace is deleted, ownership is checked, or users search across all their memories.
 
-- **Firebase Authentication:** account creation, sign-in, sign-out, password reset, and optionally Google sign-in.
-- **Cloud Firestore:** user-owned palace and marker/gateway documents, with automatic cloud persistence and synchronization between authenticated devices.
-- **Cloud Storage (optional in the first MVP):** user-uploaded palace background images. Keep URL-based backgrounds as a simpler initial option if upload support would delay core persistence.
-- **Firebase Security Rules:** enforce ownership and validate allowed reads/writes; default to deny unless a rule explicitly grants access. Test the rules before deployment.
-- **Firebase Emulator Suite:** test authentication/database behavior and confirm one account cannot read or modify another account's private data.
+PostgreSQL provides foreign keys, check constraints, transactions, and flexible cross-table queries. Those database constraints can protect relationships even when requests originate from different UI flows or race with one another. Supabase combines PostgreSQL with managed authentication and row-level security, avoiding the need to operate a custom API server for the MVP.
 
-This avoids needing to operate a custom Node/Express server for the first multi-user release. If later requirements need server-only processing, scheduled jobs, or privileged operations, add a managed function/backend then rather than prematurely creating one.
+This is a practical recommendation, not a claim that Firestore cannot implement the product. Firestore can support the relationships, but referential integrity and cascading cleanup must be implemented and tested in application logic or trusted backend functions; deleting a parent Firestore document also does not automatically remove its subcollections. Given this product's relationships and the desire to search across palaces, PostgreSQL is the simpler integrity-oriented fit.
 
-**Security rule of thumb:** frontend Firebase configuration is not a substitute for authorization. Do not place service-account credentials or privileged secrets in the React build. Protect each user's data with verified Authentication identity plus Firestore/Storage rules; use the Firebase rules emulator to test those boundaries.
+### Alternatives considered
 
-### Initial data model (proposal)
+| Option | Strengths | Trade-offs for LociCanvas | Decision |
+|---|---|---|---|
+| GitHub Pages + Firebase Auth/Firestore | Managed authentication, document data model, client SDKs, minimal server operations | No native relational foreign keys; gateway cleanup, referential integrity, and cross-palace querying need additional design | Viable, but not the first choice |
+| GitHub Pages + Supabase Auth/PostgreSQL | Relational constraints, SQL queries, transactions, RLS, managed auth | Requires explicit SQL schema, RLS policies, and tests; free projects may pause after inactivity | **Recommended default** |
+| Static frontend + custom Node/Express API + SQL database | Full control over domain endpoints, server-side operations, and integrations | More deployment, security, CORS, patching, monitoring, and API code to maintain | Defer until a concrete server-only requirement exists |
 
-- `users/{uid}`: display name and user preferences.
-- `users/{uid}/palaces/{palaceId}`: name, background reference, created/updated timestamps, and optional description.
-- `users/{uid}/palaces/{palaceId}/markers/{markerId}`: type (`note` or `gateway`), normalized x/y coordinates, title, note content, color, timestamps, and a gateway `targetPalaceId` when applicable.
+### Hosting and routing decision
 
-This structure makes private ownership explicit and avoids relying on a browser-wide shared localStorage key. Validate Firestore document sizing, queries, rule paths, and gateway-target integrity during implementation. A later shared-palace feature would need an explicit membership/role model; do not make palaces public by default.
+GitHub Pages is appropriate for the first release because the current application uses in-app state for palace navigation and does not currently expose a URL route for each palace. Vite requires the correct project base path for a repository site (typically `/Full_Stack2/`) and a workflow that builds from `Experiment2/CaseStudy/locicanvas`.
 
-## 3. Phased implementation roadmap
+A deep-link refresh problem is **conditional**, not yet a confirmed defect in this app: it becomes relevant if we add path-based routes such as `/palace/<id>`. Before implementing shareable palace URLs, choose a deliberate routing strategy (for example, hash-based routes on Pages, a verified Pages fallback, or a host with configurable SPA rewrites). A custom host such as Vercel is not required merely to serve the current single-page UI.
 
-### Phase 0 — Discovery and architecture (this phase)
+### Security principles
 
-- Record the current feature baseline and the observed implementation gaps.
-- Choose an architecture for static frontend hosting plus a managed authenticated data layer.
-- Preserve the current `main` implementation; plan work on a dedicated branch.
-- Define what “multi-user” means for the MVP: independent accounts, private palace collections, and cross-device persistence. No real-time collaborative editing requirement.
+- Treat every palace and marker as private unless an explicit future sharing model says otherwise.
+- Use Supabase Auth identity plus database RLS; hiding records in React is not authorization.
+- Enable RLS and define/test policies for each CRUD operation on every exposed user-data table.
+- Never place a Supabase service-role key or other privileged secret in frontend code. The browser uses only the intended public client configuration and user session.
+- Validate input in the UI for usability and enforce essential integrity rules in PostgreSQL as well.
+- Test cross-account reads, inserts, updates, deletes, and gateway references before public release.
 
-**Exit criteria:** roadmap committed, architecture decision documented, and implementation milestones testable.
+## 3. Proposed relational data model
 
-### Phase 1 — Stabilize the existing experience
+Prefer a small normalized schema with stable UUIDs. Exact SQL should be authored and tested when Phase 2 begins.
 
-- Extract the domain model and pure palace/marker operations from `App.jsx`; split major components (canvas, marker, note editor, gateway editor, environment manager, navigation, help).
-- Fix the missing help dialog and wire environment creation from the collection UI.
-- Implement marker move/drag with pointer-safe coordinate conversion; retain percentage coordinates so backgrounds remain resolution-independent.
-- Add validation for required names, note title/content, valid image URLs, and gateway targets; prevent broken gateway navigation.
-- Add undo/redo or a clearly scoped undo for destructive edits; add confirmation and safe handling for deleting environments with inbound gateway references.
-- Add responsive layouts, keyboard-operable menus/dialogs, visible focus styles, accessible names, loading/empty/error states, and reduced-motion support.
-- Introduce stable generated IDs and a versioned local data schema. Preserve existing local data rather than silently resetting it.
-- Add unit tests for coordinate conversion, palace/marker CRUD operations, gateway navigation/validation, and local-data migration. Run lint/build and document the baseline.
+### `palaces`
 
-**Exit criteria:** current personal/local mode is reliable; primary flows work on desktop and mobile; tests and production build pass.
+- `id UUID PRIMARY KEY`
+- `owner_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE`
+- `name TEXT NOT NULL`, with a database check that it is not blank after trimming
+- `background_url TEXT`
+- `created_at` and `updated_at` timestamps
+- A composite unique constraint on `(id, owner_id)` so other tables can enforce ownership-consistent references
 
-### Phase 2 — Accounts and cloud persistence (multi-user MVP)
+### `markers`
 
-- Add sign-up/sign-in/sign-out, password reset, authentication loading states, and protected application routes/views.
-- Create Firestore data access functions separate from UI components.
-- Apply per-user Firestore rules before connecting production data. Verify isolation through automated/emulator tests.
-- Replace direct `localStorage` persistence with a repository/data-service layer that uses authenticated cloud data.
-- Provide visible saving/saved/error/offline status and retry behavior; avoid showing a successful save before the backend confirms it.
-- Offer a controlled one-time import of the existing `locicanvas_v2_data` localStorage data into the signed-in user's account, with preview and confirmation. Do not overwrite existing cloud data silently.
-- Add export/import (versioned JSON) for user-owned collections as a portable backup.
-- Decide sign-in providers and allowed domains before configuring deployment.
+- `id UUID PRIMARY KEY`
+- `owner_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE`
+- `palace_id UUID NOT NULL`, with a composite foreign key `(palace_id, owner_id) REFERENCES palaces(id, owner_id) ON DELETE CASCADE`
+- `type` constrained to `note` or `gateway`
+- `x` and `y` numeric coordinates constrained to the inclusive range 0–100
+- `title`, `content`, `color`, and timestamps as appropriate
+- Nullable `destination_palace_id` for gateway targets
+- A composite foreign key `(destination_palace_id, owner_id) REFERENCES palaces(id, owner_id) ON DELETE CASCADE`
+- A check constraint: gateway rows must have a destination; note rows must not have one
 
-**Exit criteria:** two separate accounts see separate private palace collections; the same account sees its saved collection on another device/browser; refresh and re-login retain data; tested rules reject cross-account access.
+**Why keep `owner_id` on markers?** It makes the RLS policy straightforward, but it is duplicated ownership data. The composite foreign keys are important: they prevent a marker from being attached to another user's palace and prevent a gateway from targeting another user's palace, even if a client submits a forged ID. The composite unique key on `palaces(id, owner_id)` supports those constraints.
 
-### Phase 3 — Product features worth prioritizing
+**Deletion behavior:** deleting a palace should cascade-delete its own markers and incoming gateway markers that target it. This is more coherent than `ON DELETE SET NULL` while also requiring every gateway to have a valid destination. If product behavior later prefers a warning and manual cleanup, implement the deletion as one transaction and change the constraints deliberately; do not leave broken gateways.
 
-**Must-have for a usable release**
-- Search memories by title/content across a user's palaces.
-- Tags/categories, favorites, and sorting/filtering.
-- Environment management: create, rename, duplicate, and safely delete; background preview and sensible default/fallback.
-- Marker movement plus an accessible alternative for setting precise coordinates.
-- Autosave state, explicit failure/retry feedback, and backup export/import.
-- Better memory editor support (links and lightweight Markdown first; attachments only after storage/rules are ready).
-- Responsive canvas controls and a compact mobile navigation mode.
+Add indexes for common queries such as `palaces(owner_id)`, `markers(owner_id)`, `markers(palace_id)`, and `markers(destination_palace_id)` as justified by actual query plans. Search across memories should query markers scoped to the authenticated owner and can use PostgreSQL full-text search if a simple title/content search is insufficient.
 
-**Good next features**
-- Undo/redo history, recently opened palaces, pinned/favorite environments, and customizable marker icons.
-- Optional recall mode: hide a note's content until revealed, plus manually scheduled review reminders. Keep this lightweight; do not add AI or complex spaced-repetition algorithms until the core memory experience is validated.
-- User settings: theme/accent preferences, default landing palace, and motion preferences.
+No separate public `users` table is needed for the MVP unless profile/preferences data is required. Supabase Auth owns authentication records; a separate profile table can be introduced for application-specific fields.
 
-**Later, separately scoped**
-- Share a palace via an explicit read-only link or invitations with roles (viewer/editor).
-- Optional collaborative updates only if there is a real requirement. If introduced, design membership permissions, conflict handling, auditability, and sync behavior before implementation.
+## 4. Phased implementation roadmap
 
-### Phase 4 — Deploy, observe, and harden
+### Phase 0 — Discovery and architecture review (current phase)
 
-- GitHub Actions workflow: install from lockfile, lint, test, build, and publish `dist` to GitHub Pages.
-- Configure Vite base path, Firebase authorized domains, environment-specific public client configuration, and production rules.
-- Test sign-up, password reset, refresh/deep links, browser back/forward, failed network requests, mobile viewport, and two-account data isolation.
-- Add Firebase budget/usage alerts, basic analytics only if needed and disclosed, error reporting, and a clear account/data deletion path.
-- Write the README: architecture diagram, local setup, Firebase project setup, environment configuration, rules deployment/testing, migration/backup, and known limitations.
+- Inspect the source and document what currently works and what is incomplete.
+- Define multi-user as private independent accounts with cross-device persistence, not collaborative editing.
+- Obtain an independent architecture critique and record which recommendations are accepted, deferred, or rejected.
+- Keep the existing `main` branch unchanged and use `project-improvement/locicanvas-v2-roadmap` for planning and implementation.
 
-**Exit criteria:** reproducible deploy; no secrets in the client; security rules and user isolation tests pass; setup and recovery steps are documented.
+**Exit criteria:** architecture and MVP are documented; the schema's ownership and deletion rules are explicit; each phase has testable acceptance criteria.
 
-## 4. MVP definition
+### Phase 1 — Stabilize the existing local-first experience
 
-A release counts as a multi-user MVP only when all of the following are true:
+- Establish and record baseline `npm ci`, lint, and production-build results before changing functionality.
+- Extract pure palace/marker operations and a storage interface from `App.jsx`; split UI components as needed, without a wholesale redesign.
+- Fix environment creation and implement the missing help dialog.
+- Implement pointer-based marker drag/move with robust conversion between pixels and normalized percentage coordinates; enforce 0–100 boundaries.
+- Validate names, note fields, URLs, and gateway targets. Prevent navigation to missing targets.
+- Define safe environment deletion when other gateways point to it.
+- Add versioned local-data parsing/migration and preserve current `locicanvas_v2_data` content.
+- Add responsive layouts, keyboard-operable controls, accessible labels/focus, and reduced-motion handling.
+- Add unit tests for coordinate conversion, palace/marker operations, gateway integrity, and local-data migration.
 
-- A user can create an account, sign in, sign out, and recover access.
-- Each account owns and sees only its own private palaces and markers.
-- Palaces and memories are stored remotely and return after refresh, sign-in on another device, and a new browser session.
-- An existing local collection can be imported without silent data loss.
-- Core palace/marker/gateway flows work on desktop and mobile.
-- Firestore rules are tested for allowed and forbidden access; the frontend build passes lint/tests/build.
-- The deployed URL, setup instructions, backup/export, and known limitations are documented.
+**Exit criteria:** the local version remains usable; primary flows work on desktop and mobile; build/lint/tests pass; old local data is preserved.
 
-## 5. Explicit decisions and non-goals
+### Phase 2 — Add accounts and cloud persistence (multi-user MVP)
 
-- **Hosting:** GitHub Pages for the React/Vite static frontend; Firebase services for authentication and durable multi-user data.
-- **Data access:** private by default; never make all palace data publicly readable to simplify deployment.
-- **Scope:** keep LociCanvas a visual memory palace. Do not redesign it as a generic collaborative drawing board.
-- **Migration:** preserve browser-local data and give users control over import; no destructive automatic migration.
-- **No premature custom backend:** start with Firebase's managed services and rules. Revisit a dedicated API only if a concrete requirement justifies it.
-- **No claim of production readiness yet:** hosting is a target, not a deployed/verified outcome at this phase.
+- Create the Supabase project and version-controlled SQL migrations.
+- Define tables, constraints, indexes, grants, and RLS policies before enabling production writes.
+- Add sign-up, sign-in, sign-out, password reset, and clear authentication/loading/error states.
+- Create a data-access/repository layer (for example, `palaceRepository`) so UI components do not call Supabase throughout the component tree.
+- Integrate Supabase Auth and PostgreSQL persistence.
+- Provide truthful saving/saved/error/retry states; do not show a save as successful before the request is confirmed.
+- Offer a controlled local-data import with preview and confirmation. Handle duplicate IDs/names and partial failures; never overwrite cloud data silently.
+- Add a versioned JSON export for backup/portability.
+- Test cross-account isolation and constraint behavior using automated database tests before public deployment.
+
+**Exit criteria:** two accounts cannot read or mutate each other's data; invalid cross-user gateway targets are rejected; the same account can retrieve its data in a different browser/device; refresh/re-login preserve data; local migration and export are verified.
+
+### Phase 3 — Product improvements and edge-case hardening
+
+**Prioritize after the cloud MVP:**
+- Search across memories; tags, favorites, and sorting/filtering.
+- Complete palace lifecycle management: create, rename, duplicate, and safe delete.
+- Background preview/fallback and clear feedback for invalid or unavailable URLs.
+- Improved editor (links and lightweight Markdown before attachments).
+- Undo/redo, recently opened palaces, and user preferences.
+- Optional recall mode and manually configured review reminders if user testing supports their value.
+
+**Explicitly deferred:** background uploads, real-time collaboration, public sharing/invitations, complex spaced repetition, and AI features. Introduce sharing only with a separately designed membership/role model and authorization tests.
+
+### Phase 4 — Deployment, verification, and recovery
+
+- Add GitHub Actions workflow to install from the lockfile, lint, run tests, build, and deploy the static `dist` directory.
+- Configure the Vite base path for the nested repository directory and verify the output asset paths.
+- Configure production authentication URLs and allowed redirect URLs.
+- Run two-account isolation tests and manually test sign-up, password recovery, browser refresh/back, slow/failed network requests, mobile controls, and local import/export.
+- Review Supabase current plan limits, pausing behavior, storage/egress costs, and backup guarantees before launch. A free tier is suitable for development but should not be treated as a production backup strategy.
+- Document setup, schema migrations, RLS policies, deployment, backup/recovery, account deletion, and known limitations.
+
+**Exit criteria:** reproducible deploy; no privileged keys in the bundle; database authorization tests pass; recovery and setup instructions are documented.
+
+## 5. MVP acceptance criteria
+
+The application is not a multi-user MVP until:
+
+- Users can create an account, sign in/out, and recover access.
+- Each account can access only its own private palaces and markers.
+- Database constraints prevent cross-owner palace and gateway references.
+- Data survives refresh, re-login, and use from a second browser/device.
+- Local data can be imported without silent data loss and exported as a versioned backup.
+- The core palace, marker, and gateway flows work on desktop and mobile.
+- RLS tests demonstrate denied cross-account access for read/write/delete operations.
+- Lint, automated tests, and the production build pass.
+- Deployment, configuration, recovery, and known limitations are documented.
+
+## 6. Independent critique reconciliation (Gemini review)
+
+### Accepted
+
+- **Prefer PostgreSQL/Supabase for the initial backend.** Relational constraints fit the palace-marker-gateway domain and reduce the amount of custom cleanup logic.
+- **Make a data-access layer a Phase 1/2 boundary.** UI components should not be coupled to one persistence SDK.
+- **Implement marker dragging and coordinate checks.** Percentage coordinates are a suitable representation, but they need boundary validation and tests.
+- **Add controlled import/export and versioned local data.** Migration needs to preserve old data and never silently overwrite a cloud collection.
+- **Use RLS tests as release blockers.** Verify cross-account select/insert/update/delete behavior.
+- **Defer uploads and collaboration.** URL-based backgrounds keep initial storage needs smaller; shared editing is not a requirement.
+- **Treat deep-link routing as a deployment design decision.** Test it when URL-addressable palace routes are introduced.
+
+### Accepted with refinement
+
+- **Relational integrity needs owner-aware foreign keys, not merely foreign keys.** A foreign key from `destination_palace_id` to `palaces.id` alone does not guarantee the target belongs to the same owner. Composite keys/foreign keys and RLS jointly enforce that boundary.
+- **Gateway deletion behavior needs an explicit invariant.** Gemini's draft combined `ON DELETE SET NULL` with gateway integrity expectations. If every gateway requires a target, setting the target to NULL creates a contradictory state; this plan instead proposes cascading deletion of incoming gateways, with a transaction-based alternative if user experience requires it.
+- **Refactor, but do not perform a large rewrite for its own sake.** Split data/domain operations and the components touched by features; keep each change small and build-tested.
+
+### Qualified or not adopted as a current defect
+
+- **Firestore is not inherently unsuitable.** It supports subcollections and collection-group queries, but relational constraints are a better fit here. The supposed N+1 gateway traversal problem is not proven by the inspected code; the current app keeps palace data in one in-memory collection and has no cloud traversal implementation yet.
+- **GitHub Pages deep-link failure is conditional.** The existing app does not currently navigate using palace IDs in URL paths. A fallback/routing decision is needed if path-based routes are added, not a reason by itself to abandon Pages today.
+- **Free-tier behavior must be checked at release time.** Budget assumptions and idle pausing are operational risks to plan for, not stable guarantees.
 
 ## References
 
-- GitHub Pages overview: https://docs.github.com/en/pages/getting-started-with-github-pages/what-is-github-pages
-- Cloud Firestore security rules: https://firebase.google.com/docs/firestore/security/get-started
-- Firebase Security Rules overview: https://firebase.google.com/docs/rules/get-started
-- Firebase Hosting quotas/pricing (review before launch): https://firebase.google.com/docs/hosting/usage-quotas-pricing
+- [Vite static deployment guide — GitHub Pages](https://vite.dev/guide/static-deploy)
+- [GitHub Pages overview](https://docs.github.com/en/pages/getting-started-with-github-pages/what-is-github-pages)
+- [Supabase Row Level Security](https://supabase.com/docs/guides/database/postgres/row-level-security)
+- [Supabase user data management](https://supabase.com/docs/guides/auth/managing-user-data)
+- [Supabase free-project pausing behavior](https://supabase.com/docs/guides/platform/free-project-pausing)
+- [Firestore data model and subcollections (comparison)](https://firebase.google.com/docs/firestore/data-model)
+- [Firestore collection-group queries (comparison)](https://firebase.google.com/docs/firestore/query-data/queries)
