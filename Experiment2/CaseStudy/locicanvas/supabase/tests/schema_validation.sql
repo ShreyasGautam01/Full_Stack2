@@ -31,7 +31,7 @@ INSERT INTO public.markers (
 
 DO $assert_account_a$
 DECLARE palace_count integer;
-DECLARE marker_count integer;
+        marker_count integer;
 BEGIN
   SELECT count(*) INTO palace_count FROM public.palaces;
   SELECT count(*) INTO marker_count FROM public.markers;
