@@ -13,6 +13,10 @@ LociCanvas is a visual digital memory palace based on the Method of Loci. Create
 - Create environments from the Palace Collection drawer.
 - Built-in guide dialog.
 - Browser-local persistence using a versioned JSON envelope, with support for reading the older array format.
+- Export a versioned JSON backup and import a validated backup after explicit replacement confirmation.
+- Best-effort recovery copy preservation with an in-app recovery action.
+- HTTPS-only validation for new or edited background-image URLs.
+- Responsive, full-width editor dialogs on smaller screens.
 - Validation of saved palace/marker structure and broken gateway references.
 
 ## Technology
@@ -59,7 +63,9 @@ Data is still local to a browser profile and origin. It is not synchronized acro
 ## Current limitations
 
 - No authentication, cloud database, or cross-device synchronization.
-- No background-image upload; backgrounds are supplied as URLs.
+- No background-image upload; backgrounds are supplied as HTTPS URLs.
+- Import currently accepts pasted JSON backup content; direct file-picker import is not implemented.
+- Browser-local recovery remains best-effort and depends on browser storage being accessible.
 - Palace deletion UI, search, tags, undo/redo, and portable JSON export/import are not implemented yet.
 - Browser interaction and deployment still need end-to-end verification before the app should be considered production-ready.
 

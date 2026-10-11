@@ -1,5 +1,23 @@
 export const PALACE_DATA_VERSION = 1;
 
+export function isValidHttpsUrl(value, allowEmpty = true) {
+  const candidate = typeof value === 'string' ? value.trim() : '';
+  if (!candidate) return allowEmpty;
+
+  try {
+    const url = new URL(candidate);
+    return url.protocol === 'https:' && Boolean(url.hostname);
+  } catch {
+    return false;
+  }
+}
+
+export function createStableId(prefix = 'item') {
+  const id = globalThis.crypto?.randomUUID?.()
+    ?? `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+  return `${prefix}-${id}`;
+}
+
 export function clampPercent(value) {
   const numeric = Number(value);
   if (!Number.isFinite(numeric)) return 0;

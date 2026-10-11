@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 
 import {
   clampPercent,
+  createStableId,
+  isValidHttpsUrl,
   deletePalaceAndIncomingGateways,
   moveMarkerInPalaces,
   parsePalaceStorage,
@@ -76,4 +78,22 @@ test('invalid data is rejected rather than silently reset', () => {
       { id: 'gateway-1', type: 'gateway', x: 50, y: 50, targetId: 'missing' },
     ] },
   ])));
+});
+
+
+test('accepts only HTTPS URLs and optionally empty backgrounds', () => {
+  assert.equal(isValidHttpsUrl('', true), true);
+  assert.equal(isValidHttpsUrl('', false), false);
+  assert.equal(isValidHttpsUrl('https://images.example.com/palace.jpg'), true);
+  assert.equal(isValidHttpsUrl('http://images.example.com/palace.jpg'), false);
+  assert.equal(isValidHttpsUrl('javascript:alert(1)'), false);
+  assert.equal(isValidHttpsUrl('not a URL'), false);
+});
+
+test('generates prefixed IDs that are not fixed timestamps', () => {
+  const first = createStableId('palace');
+  const second = createStableId('palace');
+  assert.match(first, /^palace-/);
+  assert.match(second, /^palace-/);
+  assert.notEqual(first, second);
 });
