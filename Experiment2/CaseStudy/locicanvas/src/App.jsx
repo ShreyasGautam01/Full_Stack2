@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { parsePalaceStorage, pointerToCanvasPercent, moveMarkerInPalaces, serializePalaceStorage } from './domain/palaceModel.js';
+import { createStableId, isValidHttpsUrl, parsePalaceStorage, pointerToCanvasPercent, moveMarkerInPalaces, serializePalaceStorage } from './domain/palaceModel.js';
 import {
   Box,
   Typography,
@@ -46,6 +46,8 @@ import {
   Delete as DeleteIcon,
   Note as NoteIcon,
   Settings as SettingsIcon,
+  Download as DownloadIcon,
+  Upload as UploadIcon,
 } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -230,6 +232,9 @@ export default function App() {
   const [gatewayDialogOpen, setGatewayDialogOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false); // Palace settings
   const [newEnvironmentOpen, setNewEnvironmentOpen] = useState(false);
+  const [transferOpen, setTransferOpen] = useState(false);
+  const [transferText, setTransferText] = useState('');
+  const [transferError, setTransferError] = useState('');
 
   // --- PERSISTENCE EFFECT ---
   useEffect(() => {
@@ -311,11 +316,20 @@ export default function App() {
   };
 
   const handleCreateGateway = (targetPalaceId, isNew = false, newPalaceName = '', newPalaceUrl = '') => {
+    if (!clickPos) return;
+    if (isNew && (!newPalaceName.trim() || !isValidHttpsUrl(newPalaceUrl, true))) {
+      setStorageIssue('Enter an environment name and a valid HTTPS image URL, or leave the URL empty.');
+      return;
+    }
+    if (!isNew && (!targetPalaceId || !palaces.some(p => p.id === targetPalaceId) || targetPalaceId === currentLevelId)) {
+      setStorageIssue('Choose a valid destination environment for this gateway.');
+      return;
+    }
     let finalTargetId = targetPalaceId;
     setPalaces(prev => {
       let newState = [...prev];
       if (isNew) {
-        finalTargetId = `palace-${Date.now()}`;
+        finalTargetId = createStableId('palace');
         const newPalace = {
           id: finalTargetId,
           name: newPalaceName,
@@ -325,7 +339,7 @@ export default function App() {
         newState.push(newPalace);
       }
       const gatewayItem = {
-        id: `gateway-${Date.now()}`,
+        id: createStableId('gateway'),
         type: 'gateway',
         x: clickPos.x,
         y: clickPos.y,
@@ -341,15 +355,70 @@ export default function App() {
   // --- CORE LOGIC: ENVIRONMENT SETTINGS ---
   const handleUpdateEnvironment = (newName, newUrl) => {
     const trimmedName = newName.trim();
-    if (!trimmedName) return;
+    if (!trimmedName || !isValidHttpsUrl(newUrl, true)) {
+      setStorageIssue('Use a non-empty environment name and an HTTPS background image URL (or leave the URL empty).');
+      return;
+    }
     setPalaces(prev => prev.map(p => p.id === currentLevelId ? { ...p, name: trimmedName, imageUrl: newUrl.trim() } : p));
     setSettingsOpen(false);
   };
 
+  const handleExport = () => {
+    try {
+      const blob = new Blob([serializePalaceStorage(palaces)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = 'locicanvas-backup.json';
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      URL.revokeObjectURL(url);
+      setStorageIssue('Backup exported.');
+    } catch {
+      setStorageIssue('Export failed. Copy your data before leaving this page.');
+    }
+  };
+
+  const handleImport = () => {
+    try {
+      const imported = parsePalaceStorage(transferText);
+      if (!window.confirm('Import replaces the current local collection. Export a backup first if you need the current collection. Continue?')) return;
+      setPalaces(imported);
+      setNavStack([imported[0].id]);
+      setTransferOpen(false);
+      setTransferText('');
+      setTransferError('');
+      setStorageIssue('Collection imported.');
+    } catch {
+      setTransferError('This is not a valid LociCanvas backup. No data was changed.');
+    }
+  };
+
+  const handleRestoreRecovery = () => {
+    try {
+      const raw = localStorage.getItem(RECOVERY_KEY);
+      if (!raw) {
+        setStorageIssue('No recovery copy was found in this browser.');
+        return;
+      }
+      const recovered = parsePalaceStorage(raw);
+      if (!window.confirm('Restore the preserved recovery copy? Export a backup first if needed.')) return;
+      setPalaces(recovered);
+      setNavStack([recovered[0].id]);
+      setStorageIssue('Recovery copy restored.');
+    } catch {
+      setStorageIssue('The preserved recovery copy is invalid and could not be restored.');
+    }
+  };
+
   const handleCreateNewEnvironment = (name, url) => {
     const trimmedName = name.trim();
-    if (!trimmedName) return;
-    const newId = `palace-${Date.now()}`;
+    if (!trimmedName || !isValidHttpsUrl(url, true)) {
+      setStorageIssue('Use a non-empty environment name and an HTTPS background image URL (or leave the URL empty).');
+      return;
+    }
+    const newId = createStableId('palace');
     const newPalace = {
       id: newId,
       name: trimmedName,
@@ -401,6 +470,8 @@ export default function App() {
             </Box>
 
             <Box sx={{ display: 'flex', gap: 1, pointerEvents: 'auto' }}>
+              <Tooltip title="Export backup"><IconButton aria-label="Export backup" onClick={handleExport} sx={{ bgcolor: 'rgba(0,0,0,0.5)', color: 'white' }}><DownloadIcon /></IconButton></Tooltip>
+              <Tooltip title="Import backup"><IconButton aria-label="Import backup" onClick={() => { setTransferText(''); setTransferError(''); setTransferOpen(true); }} sx={{ bgcolor: 'rgba(0,0,0,0.5)', color: 'white' }}><UploadIcon /></IconButton></Tooltip>
               <Button 
                 variant="contained" 
                 startIcon={<EditIcon />} 
@@ -486,12 +557,7 @@ export default function App() {
         </Menu>
 
         {/* 2. Note Editor with Color Harmony */}
-        <Dialog 
-          open={editorOpen} 
-          onClose={() => setEditorOpen(false)}
-          TransitionComponent={GrowTransition}
-          PaperProps={{ sx: { borderRadius: 4, bgcolor: '#1a1f26', minWidth: 400, border: '1px solid rgba(255,255,255,0.1)' } }}
-        >
+        <Dialog open={editorOpen} onClose={() => setEditorOpen(false)} fullWidth maxWidth="sm" TransitionComponent={GrowTransition} PaperProps={{ sx: { borderRadius: 4, bgcolor: '#1a1f26', width: '100%', maxWidth: 560, mx: 1, border: '1px solid rgba(255,255,255,0.1)' } }}>
           {editingItem && (
             <NoteEditorForm
               key={editingItem.id}
@@ -504,7 +570,7 @@ export default function App() {
         </Dialog>
 
         {/* 3. Gateway Creator */}
-        <Dialog open={gatewayDialogOpen} onClose={() => setGatewayDialogOpen(false)}>
+        <Dialog open={gatewayDialogOpen} onClose={() => setGatewayDialogOpen(false)} fullWidth maxWidth="sm">
           <GatewaySetupForm 
             palaces={palaces} 
             currentId={currentLevelId} 
@@ -514,7 +580,7 @@ export default function App() {
         </Dialog>
 
         {/* 4. Environment Settings */}
-        <Dialog open={settingsOpen} onClose={() => setSettingsOpen(false)}>
+        <Dialog open={settingsOpen} onClose={() => setSettingsOpen(false)} fullWidth maxWidth="sm">
           {currentLevel && (
             <EnvironmentSettingsForm 
               currentName={currentLevel.name} 
@@ -525,7 +591,20 @@ export default function App() {
           )}
         </Dialog>
 
-        <Dialog open={newEnvironmentOpen} onClose={() => setNewEnvironmentOpen(false)}>
+        <Dialog open={transferOpen} onClose={() => setTransferOpen(false)} fullWidth maxWidth="sm">
+          <Box sx={{ p: 3, bgcolor: '#1a1f26', color: 'white' }}>
+            <Typography variant="h6" sx={{ mb: 1 }}>Import a LociCanvas backup</Typography>
+            <Typography variant="body2" sx={{ mb: 2, color: 'text.secondary' }}>Paste a previously exported JSON backup. Import replaces the current local collection after confirmation.</Typography>
+            <TextField fullWidth multiline minRows={8} maxRows={16} label="Backup JSON" value={transferText} onChange={event => setTransferText(event.target.value)} />
+            {transferError && <Alert severity="error" sx={{ mt: 2 }}>{transferError}</Alert>}
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: 2 }}>
+              <Button onClick={() => setTransferOpen(false)}>Cancel</Button>
+              <Button variant="contained" disabled={!transferText.trim()} onClick={handleImport}>Validate and Import</Button>
+            </Box>
+          </Box>
+        </Dialog>
+
+        <Dialog open={newEnvironmentOpen} onClose={() => setNewEnvironmentOpen(false)} fullWidth maxWidth="sm">
           <EnvironmentSettingsForm
             mode="create"
             currentName=""
@@ -578,7 +657,8 @@ export default function App() {
 
         {storageIssue && (
           <Snackbar open anchorOrigin={{ vertical: 'top', horizontal: 'center' }}>
-            <Alert severity="warning" onClose={() => setStorageIssue('')} sx={{ maxWidth: 600 }}>
+            <Alert severity={/exported|imported|restored/.test(storageIssue) ? 'success' : 'warning'} onClose={() => setStorageIssue('')} sx={{ maxWidth: 600 }}
+              action={storageIssue.includes('recovery copy was preserved') ? <Button color="inherit" size="small" onClick={handleRestoreRecovery}>Try recovery</Button> : undefined}>
               {storageIssue}
             </Alert>
           </Snackbar>
@@ -697,13 +777,13 @@ function GatewaySetupForm({ palaces, currentId, onSubmit, onCancel }) {
       ) : (
         <>
           <TextField fullWidth label="Environment Name" value={newName} onChange={e => setNewName(e.target.value)} sx={{ mb: 2 }} />
-          <TextField fullWidth label="Image URL (Optional)" value={newUrl} onChange={e => setNewUrl(e.target.value)} helperText="Leave empty for default" />
+          <TextField fullWidth label="Image URL (Optional)" value={newUrl} onChange={e => setNewUrl(e.target.value)} error={!isValidHttpsUrl(newUrl, true)} helperText={!isValidHttpsUrl(newUrl, true) ? 'Use a valid HTTPS URL.' : 'Leave empty for the default background'} />
         </>
       )}
 
       <Box sx={{ mt: 4, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
         <Button onClick={onCancel}>Cancel</Button>
-        <Button variant="contained" onClick={handleSubmit} disabled={mode === 'existing' ? !targetId : !newName.trim()}>Create Link</Button>
+        <Button variant="contained" onClick={handleSubmit} disabled={mode === 'existing' ? !targetId || !availablePalaces.some(p => p.id === targetId) : !newName.trim() || !isValidHttpsUrl(newUrl, true)}>Create Link</Button>
       </Box>
     </Box>
   );
@@ -725,10 +805,10 @@ function EnvironmentSettingsForm({ currentName, currentUrl, onSave, onCancel, mo
         sx={{ mb: 3 }}
         required
       />
-      <TextField fullWidth label="Background Image URL" value={url} onChange={e => setUrl(e.target.value)} sx={{ mb: 3 }} />
+      <TextField fullWidth label="Background Image URL" value={url} onChange={e => setUrl(e.target.value)} error={!isValidHttpsUrl(url, true)} helperText={!isValidHttpsUrl(url, true) ? 'Use a valid HTTPS URL or leave empty.' : 'Use an HTTPS image URL or leave empty for no background.'} sx={{ mb: 3 }} />
       <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
         <Button onClick={onCancel}>Cancel</Button>
-        <Button variant="contained" disabled={!name.trim()} onClick={() => onSave(name, url)}>
+        <Button variant="contained" disabled={!name.trim() || !isValidHttpsUrl(url, true)} onClick={() => onSave(name, url)}>
           {mode === 'create' ? 'Create Environment' : 'Update Environment'}
         </Button>
       </Box>
