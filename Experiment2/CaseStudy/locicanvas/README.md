@@ -60,14 +60,24 @@ Data is still local to a browser profile and origin. It is not synchronized acro
 - `vite.config.js`: Vite configuration.
 - `IMPROVEMENT_PLAN.md`: phased multi-user upgrade plan and architecture decisions.
 
+## GitHub Pages deployment
+
+The repository includes a GitHub Actions workflow at `.github/workflows/locicanvas-pages.yml`. It tests, builds, and deploys LociCanvas when relevant changes reach `main`, and it can also be run manually from the Actions tab.
+
+Before its first successful deployment, open **Repository Settings → Pages → Build and deployment** and set **Source** to **GitHub Actions**. Then review the LociCanvas Pages workflow in the Actions tab. The project-site base path is configured as `/Full_Stack2/`, because LociCanvas lives inside the larger repository.
+
+Expected site URL: https://shreyasgautam01.github.io/Full_Stack2/
+
+GitHub Pages only serves the static frontend. This version continues to store data in the current browser's localStorage; it does **not** yet offer accounts, shared cloud data, or cross-device synchronization.
+
 ## Current limitations
 
 - No authentication, cloud database, or cross-device synchronization.
 - No background-image upload; backgrounds are supplied as HTTPS URLs.
 - Import currently accepts pasted JSON backup content; direct file-picker import is not implemented.
 - Browser-local recovery remains best-effort and depends on browser storage being accessible.
-- Palace deletion UI, search, tags, undo/redo, and portable JSON export/import are not implemented yet.
-- Browser interaction and deployment still need end-to-end verification before the app should be considered production-ready.
+- Palace deletion UI, search, tags, and undo/redo are not implemented yet.
+- Browser interaction and the first Pages deployment still need end-to-end verification before the app should be considered production-ready.
 
 ## Screenshots
 

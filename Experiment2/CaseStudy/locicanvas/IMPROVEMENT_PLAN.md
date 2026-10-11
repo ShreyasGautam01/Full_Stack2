@@ -1,6 +1,6 @@
 # LociCanvas v2 — Improvement Plan
 
-**Status:** Phase 1 — stabilization and CI established; final verification in progress  
+**Status:** Phase 1 checks pass; GitHub Pages deployment prepared  
 **Scope:** `Experiment2/CaseStudy/locicanvas`  
 **Planning branch:** `project-improvement/locicanvas-v2-roadmap`  
 **Baseline branch:** `main` (kept unchanged by the planning work)
@@ -242,6 +242,17 @@ The application is not a multi-user MVP until:
 - Added tests for HTTPS URL validation and generated ID uniqueness.
 
 **Verification status:** changes are committed to `feat/locicanvas-phase1-completion` and require the new GitHub Actions run. Do not consider the phase complete until CI passes and browser checks verify import/export, recovery, URL validation, and marker dragging. Import uses pasted JSON rather than a file picker in this pass.
+
+### Phase 1 — CI result and Phase 4 deployment preparation
+
+- The GitHub Actions run for the Phase 1 follow-up PR completed successfully: dependency installation, all domain tests, ESLint, and Vite production build passed.
+- Added the Vite project-site base path `/Full_Stack2/` for repository-hosted Pages deployment.
+- Replaced the malformed Google Fonts link (the existing href contained Markdown link syntax) and updated the page title, description, theme color, and favicon reference.
+- Added a dedicated Pages workflow that runs tests, lint, build, uploads only the LociCanvas `dist` folder, and deploys via the GitHub Pages environment.
+- Updated deployment instructions. The repository's Pages source must be set to **GitHub Actions** in Settings before the first deployment can succeed.
+- Corrected README limitations to reflect that JSON backup import/export has been implemented.
+
+**Deployment status:** workflow prepared, not yet deployed or live-verified. This execution environment cannot change the repository's Pages setting. After merging the deployment PR, set Settings → Pages → Source to GitHub Actions and inspect the workflow result. The deployed app remains localStorage-only; Supabase authentication and cloud persistence are still Phase 2 and are not implied by static hosting.
 
 ## References
 
