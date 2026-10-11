@@ -144,7 +144,7 @@ const Marker = ({ item, onClick, isEditMode, onDelete, onMove }) => {
       whileHover={{ scale: 1.2, zIndex: 100 }}
       style={{ position: 'absolute', top: `${item.y}%`, left: `${item.x}%`, transform: 'translate(-50%, -50%)', cursor: isEditMode ? 'grab' : 'pointer', touchAction: isEditMode ? 'none' : 'auto', zIndex: 10 }}
       onPointerDown={(event) => {
-        if (!isEditMode || event.button !== 0) return;
+        if (!isEditMode || event.button !== 0 || event.target.closest('button')) return;
         event.stopPropagation();
         event.currentTarget.setPointerCapture(event.pointerId);
         dragRef.current = { pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, moved: false };
@@ -335,7 +335,9 @@ export default function App() {
 
   // --- CORE LOGIC: ENVIRONMENT SETTINGS ---
   const handleUpdateEnvironment = (newName, newUrl) => {
-    setPalaces(prev => prev.map(p => p.id === currentLevelId ? { ...p, name: newName, imageUrl: newUrl } : p));
+    const trimmedName = newName.trim();
+    if (!trimmedName) return;
+    setPalaces(prev => prev.map(p => p.id === currentLevelId ? { ...p, name: trimmedName, imageUrl: newUrl.trim() } : p));
     setSettingsOpen(false);
   };
 
@@ -486,7 +488,8 @@ export default function App() {
           PaperProps={{ sx: { borderRadius: 4, bgcolor: '#1a1f26', minWidth: 400, border: '1px solid rgba(255,255,255,0.1)' } }}
         >
           {editingItem && (
-            <NoteEditorForm 
+            <NoteEditorForm
+              key={editingItem.id}
               initialItem={editingItem} 
               onSave={handleSaveNote} 
               onDelete={handleDeleteItem}
@@ -598,10 +601,6 @@ export default function App() {
 function NoteEditorForm({ initialItem, onSave, onDelete, onCancel }) {
   const [formData, setFormData] = useState(initialItem);
   const accentColor = formData.color || DEFAULT_THEME_COLOR;
-
-  useEffect(() => {
-    setFormData(initialItem);
-  }, [initialItem]);
 
   return (
     <Box sx={{ p: 4, borderTop: `6px solid ${accentColor}` }}>
