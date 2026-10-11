@@ -228,7 +228,7 @@ The application is not a multi-user MVP until:
 
 **Verification performed:** the six domain test cases passed under Node.js 22.16.0 in an isolated local test run using the committed domain logic and test cases.
 
-**Not yet verified:** full `npm test` against a local checkout, `npm run lint`, `npm run build`, visual/browser interactions, keyboard/screen-reader behavior, mobile layout, and deployment. A direct Git clone could not be completed in the execution environment because it could not resolve `github.com`; therefore no claim is made that the full application build or browser test has passed. These checks must be run after obtaining a local checkout or through repository CI.
+**Initial verification gap (historical):** at the first implementation pass, full tests/lint/build, browser interactions, keyboard/screen-reader behavior, mobile layout, and deployment had not yet been verified. Later GitHub Actions runs have passed domain tests, lint, and production build, and the Pages deployment workflow succeeded. Browser interaction/accessibility/device smoke tests remain outstanding.
 
 **Remaining Phase 1 verification:** run browser smoke tests for marker dragging, import/export, recovery, responsive dialogs, keyboard focus, and reduced-motion/accessibility behavior. URL/form validation, backup import/export, recovery UI, and repeatable CI checks have been implemented. Cloud schema work can proceed, but account integration should not be described as complete before these browser checks and database security tests pass.
 
