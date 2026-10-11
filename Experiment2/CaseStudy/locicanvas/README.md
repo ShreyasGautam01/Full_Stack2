@@ -25,7 +25,7 @@ LociCanvas is a visual digital memory palace based on the Method of Loci. Create
 - Material UI 7
 - Framer Motion 12
 - Browser `localStorage` (current persistence; no accounts or cloud sync yet)
-- Node.js test runner for domain-level tests
+- Node.js test runner for domain tests and PostgreSQL 17 CI checks for the migration, RLS, constraints, and gateway cleanup
 
 ## Run locally
 
@@ -44,6 +44,8 @@ npm run lint
 npm run build
 ```
 
+GitHub Actions also applies the SQL migration to a disposable PostgreSQL 17 database and checks the owner policies and integrity constraints. This uses a test-only substitute for the Supabase Auth helper; it does not replace a live Supabase project verification.
+
 ## Data persistence and recovery
 
 The application uses the browser storage key `locicanvas_v2_data`. New saves use an envelope containing `schemaVersion` and `palaces`; existing valid array-format data is still read and migrated on the next successful save.
@@ -60,7 +62,8 @@ Data is still local to a browser profile and origin. It is not synchronized acro
 - `vite.config.js`: Vite configuration.
 - `IMPROVEMENT_PLAN.md`: phased multi-user upgrade plan and architecture decisions.
 - `supabase/migrations/`: version-controlled PostgreSQL schema and RLS policies.
-- `SUPABASE_SETUP.md`: database setup, migration deployment, and cloud-security verification checklist.
+- `supabase/tests/`: disposable PostgreSQL setup plus migration/ownership tests run in CI.
+- `SUPABASE_SETUP.md`: database setup, migration deployment, and live cloud-security verification checklist.
 
 ## GitHub Pages deployment
 
