@@ -34,13 +34,10 @@ import {
   InputLabel,
   Stack,
   alpha,
-  Slider
 } from '@mui/material';
 import {
   Add as AddIcon,
   Book as BookIcon,
-  Close as CloseIcon,
-  Save as SaveIcon,
   Collections as CollectionsIcon,
   ArrowBack as ArrowBackIcon,
   Edit as EditIcon,
@@ -49,8 +46,6 @@ import {
   Delete as DeleteIcon,
   Note as NoteIcon,
   Settings as SettingsIcon,
-  Palette as PaletteIcon,
-  Image as ImageIcon
 } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -94,7 +89,7 @@ function loadSavedPalaces() {
     if (!saved) return { palaces: INITIAL_DATA, issue: '' };
     try {
       return { palaces: parsePalaceStorage(saved), issue: '' };
-    } catch (error) {
+    } catch {
       try { localStorage.setItem(RECOVERY_KEY, saved); } catch { /* Storage may be unavailable. */ }
       return { palaces: INITIAL_DATA, issue: 'Saved data could not be read. A recovery copy was preserved when browser storage allowed it; the sample collection is loaded until the saved data is recovered.' };
     }
@@ -608,6 +603,10 @@ function NoteEditorForm({ initialItem, onSave, onDelete, onCancel }) {
   const [formData, setFormData] = useState(initialItem);
   const accentColor = formData.color || DEFAULT_THEME_COLOR;
 
+  useEffect(() => {
+    setFormData(initialItem);
+  }, [initialItem]);
+
   return (
     <Box sx={{ p: 4, borderTop: `6px solid ${accentColor}` }}>
       <Typography variant="h6" sx={{ mb: 3, color: accentColor }}>
@@ -616,7 +615,11 @@ function NoteEditorForm({ initialItem, onSave, onDelete, onCancel }) {
       
       <TextField 
         fullWidth autoFocus label="Title" variant="filled" sx={{ mb: 3 }}
-        value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})}
+        value={formData.title}
+        inputProps={{ maxLength: 120 }}
+        onChange={e => setFormData({...formData, title: e.target.value})}
+        error={!formData.title.trim()}
+        helperText={!formData.title.trim() ? 'A title is required.' : ' '}
       />
       
       <TextField 
@@ -649,7 +652,7 @@ function NoteEditorForm({ initialItem, onSave, onDelete, onCancel }) {
         </IconButton>
         <Box sx={{ display: 'flex', gap: 2 }}>
           <Button onClick={onCancel} color="inherit">Cancel</Button>
-          <Button variant="contained" onClick={() => onSave(formData)} sx={{ bgcolor: accentColor, '&:hover': { bgcolor: accentColor } }}>
+          <Button disabled={!formData.title.trim()} variant="contained" onClick={() => onSave({ ...formData, title: formData.title.trim() })} sx={{ bgcolor: accentColor, '&:hover': { bgcolor: accentColor } }}>
             Save
           </Button>
         </Box>
@@ -700,7 +703,7 @@ function GatewaySetupForm({ palaces, currentId, onSubmit, onCancel }) {
 
       <Box sx={{ mt: 4, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
         <Button onClick={onCancel}>Cancel</Button>
-        <Button variant="contained" onClick={handleSubmit} disabled={mode === 'existing' && !targetId}>Create Link</Button>
+        <Button variant="contained" onClick={handleSubmit} disabled={mode === 'existing' ? !targetId : !newName.trim()}>Create Link</Button>
       </Box>
     </Box>
   );
