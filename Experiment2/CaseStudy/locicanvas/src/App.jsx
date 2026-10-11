@@ -49,6 +49,8 @@ import {
 } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
 
+const AnimatedDiv = motion.div;
+
 // --- COLOR PALETTE ---
 const ACCENT_COLORS = [
   { name: 'Sage', hex: '#a5d6a7' },
@@ -138,7 +140,7 @@ const Marker = ({ item, onClick, isEditMode, onDelete, onMove }) => {
   const itemColor = item.color || DEFAULT_THEME_COLOR;
   
   return (
-    <motion.div
+    <AnimatedDiv
       initial={{ scale: 0, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
       whileHover={{ scale: 1.2, zIndex: 100 }}
@@ -195,7 +197,7 @@ const Marker = ({ item, onClick, isEditMode, onDelete, onMove }) => {
           <DeleteIcon sx={{ fontSize: 14, color: 'white' }} />
         </IconButton>
       )}
-    </motion.div>
+    </AnimatedDiv>
   );
 };
 
@@ -215,7 +217,8 @@ export default function App() {
   const [editMode, setEditMode] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
-  const [revealLevel, setRevealLevel] = useState(0);
+  const [revealState, setRevealState] = useState({ palaceId: null, level: 0 });
+  const revealLevel = revealState.palaceId === currentLevelId ? revealState.level : 0;
 
   // --- INTERACTION STATE ---
   const [contextMenu, setContextMenu] = useState(null); // { mouseX, mouseY }
@@ -232,19 +235,21 @@ export default function App() {
   useEffect(() => {
     if (initialStorage.issue && palaces === initialStorage.palaces) return;
 
+    let nextIssue = '';
     try {
       localStorage.setItem(STORAGE_KEY, serializePalaceStorage(palaces));
-      setStorageIssue('');
     } catch {
-      setStorageIssue('Changes could not be saved to browser storage. Export or copy important content before leaving this page.');
+      nextIssue = 'Changes could not be saved to browser storage. Export or copy important content before leaving this page.';
     }
+
+    const statusTimer = setTimeout(() => setStorageIssue(nextIssue), 0);
+    return () => clearTimeout(statusTimer);
   }, [palaces, initialStorage]);
 
   // --- REVEAL ANIMATION ---
   useEffect(() => {
-    setRevealLevel(0);
-    const t1 = setTimeout(() => setRevealLevel(1), 300); // Image clear
-    const t2 = setTimeout(() => setRevealLevel(2), 800); // Icons appear
+    const t1 = setTimeout(() => setRevealState({ palaceId: currentLevelId, level: 1 }), 300);
+    const t2 = setTimeout(() => setRevealState({ palaceId: currentLevelId, level: 2 }), 800);
     return () => { clearTimeout(t1); clearTimeout(t2); };
   }, [currentLevelId]);
 
@@ -425,7 +430,7 @@ export default function App() {
           onClick={handleCanvasClick}
         >
           <AnimatePresence mode='wait'>
-            <motion.div
+            <AnimatedDiv
               key={currentLevelId}
               initial={{ opacity: 0, scale: 1.1 }}
               animate={{ opacity: 1, scale: 1, filter: revealLevel > 0 ? 'blur(0px)' : 'blur(40px)' }}
@@ -456,7 +461,7 @@ export default function App() {
                   }} 
                 />
               ))}
-            </motion.div>
+            </AnimatedDiv>
           </AnimatePresence>
         </Box>
 
