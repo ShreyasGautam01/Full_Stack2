@@ -68,7 +68,7 @@ After applying the migration and once the auth/data integration exists, use two 
 5. Deleting a destination palace must remove incoming gateways and leave no broken destination references.
 6. Repeat tests for read/insert/update/delete after signing out and signing back in.
 
-These are release blockers for the cloud phase, not checks that this schema-only PR claims to have executed. The existing Node-based CI tests validate domain logic but do not execute PostgreSQL migrations or prove RLS behavior.
+The GitHub Actions database job now applies this migration to PostgreSQL 17 and exercises the constraints, row visibility/mutations, owner-aware foreign keys, and gateway cleanup using a test-only `auth.uid()` fixture. This catches migration syntax and policy regressions, but it does not contact your hosted Supabase project. The two-account checks above remain required before the cloud frontend can be considered production-ready.
 
 ## Official references
 
