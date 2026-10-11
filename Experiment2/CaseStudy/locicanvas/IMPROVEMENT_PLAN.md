@@ -1,6 +1,6 @@
 # LociCanvas v2 — Improvement Plan
 
-**Status:** Phase 1 checks pass; GitHub Pages deployment prepared  
+**Status:** Phase 1 domain tests/lint/build pass; GitHub Pages deployment workflow succeeded; Phase 2 database foundation is under review  
 **Scope:** `Experiment2/CaseStudy/locicanvas`  
 **Planning branch:** `project-improvement/locicanvas-v2-roadmap`  
 **Baseline branch:** `main` (kept unchanged by the planning work)
@@ -230,9 +230,9 @@ The application is not a multi-user MVP until:
 
 **Not yet verified:** full `npm test` against a local checkout, `npm run lint`, `npm run build`, visual/browser interactions, keyboard/screen-reader behavior, mobile layout, and deployment. A direct Git clone could not be completed in the execution environment because it could not resolve `github.com`; therefore no claim is made that the full application build or browser test has passed. These checks must be run after obtaining a local checkout or through repository CI.
 
-**Known remaining Phase 1 work:** validate background URLs; complete gateway/new-environment form validation; add export/import and a deliberate local recovery UI; test marker dragging under actual browser pointer capture; improve responsive dialog sizing; and establish a repeatable CI result before beginning cloud integration.
+**Remaining Phase 1 verification:** run browser smoke tests for marker dragging, import/export, recovery, responsive dialogs, keyboard focus, and reduced-motion/accessibility behavior. URL/form validation, backup import/export, recovery UI, and repeatable CI checks have been implemented. Cloud schema work can proceed, but account integration should not be described as complete before these browser checks and database security tests pass.
 
-### Phase 1 — follow-up hardening pass (in review)
+### Phase 1 — follow-up hardening pass (merged; CI succeeded)
 
 - Added HTTPS URL validation for newly entered or edited environment backgrounds and gateway-created environments; blank URLs remain allowed and use the app's fallback behavior where configured.
 - Replaced timestamp-only palace/gateway IDs with UUID-backed IDs when available, plus a fallback for environments without `crypto.randomUUID`.
@@ -241,7 +241,7 @@ The application is not a multi-user MVP until:
 - Made note, gateway, settings, and environment creation dialogs use responsive widths.
 - Added tests for HTTPS URL validation and generated ID uniqueness.
 
-**Verification status:** changes are committed to `feat/locicanvas-phase1-completion` and require the new GitHub Actions run. Do not consider the phase complete until CI passes and browser checks verify import/export, recovery, URL validation, and marker dragging. Import uses pasted JSON rather than a file picker in this pass.
+**Verification status:** PR #3 was merged after GitHub Actions passed dependency installation, domain tests, ESLint, and the Vite production build. Browser checks for import/export, recovery, URL validation, marker dragging, responsive dialogs, and accessibility remain outstanding. Import uses pasted JSON rather than a file picker.
 
 ### Phase 1 — CI result and Phase 4 deployment preparation
 
@@ -252,7 +252,7 @@ The application is not a multi-user MVP until:
 - Updated deployment instructions. The repository's Pages source must be set to **GitHub Actions** in Settings before the first deployment can succeed.
 - Corrected README limitations to reflect that JSON backup import/export has been implemented.
 
-**Deployment status:** workflow prepared, not yet deployed or live-verified. This execution environment cannot change the repository's Pages setting. After merging the deployment PR, set Settings → Pages → Source to GitHub Actions and inspect the workflow result. The deployed app remains localStorage-only; Supabase authentication and cloud persistence are still Phase 2 and are not implied by static hosting.
+**Deployment status:** PR #4 is merged, repository Pages source is set to GitHub Actions, and the Pages workflow completed successfully for merge commit `8fba2d04d27df3e460d342ba9bee9e05c78f001b`. The published workflow result is recorded in Actions. A direct browser/device smoke test has not yet been performed here. The app remains localStorage-only until the Supabase frontend integration is implemented.
 
 ### Phase 2 — Supabase schema foundation (in review)
 
